@@ -37,7 +37,7 @@
 #define NUMBER_OVERFLOW             300     /* Date length overflow */
 
 
-// 数据在查询队列中的保存位置；
+// Position of data in query results queue;
 #define POSITION_SERIALNUMBER       4      /* Card serial number */
 #define POSITION_CARDTYPE           5      /* Card type */
 #define POSITION_EXPIRYDATE         6      /* Card expiration date */
