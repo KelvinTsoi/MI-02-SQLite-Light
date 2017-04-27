@@ -68,6 +68,13 @@ public:
     int FindBySerialNumber(unsigned int serialNumber, CARD_S *CardInfo);
 
     /**
+     * @function: counting records of table;
+     * @parameter: amount sum of record in database;
+     * @return: success return 0, others signify function error code;
+     */
+    int CountBySerialNumber(unsigned int &amount);
+
+    /**
      * @function: GetInstance method in singleton pattern;
      * @return: pointer of class;
      */

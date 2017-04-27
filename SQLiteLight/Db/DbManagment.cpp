@@ -88,3 +88,9 @@ int DbManagment::FindBySerialNumber(unsigned int serialNumber, CARD_S *CardInfo)
     AUTO_LOCK(mtx);
     return (m_pDb->FindBySerialNumber(serialNumber, CardInfo));
 }
+
+int DbManagment::CountBySerialNumber(unsigned int &amount)
+{
+    AUTO_LOCK(mtx);
+    return (m_pDb->CountBySerialNumber(amount));
+}

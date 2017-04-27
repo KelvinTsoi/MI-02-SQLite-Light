@@ -12,14 +12,14 @@
 /*
  * File:   ThreadMutex.h
  * Author: CAI
- * Created on 2016/7/29, 9:58pm
+ * Created on 2017/4/27, 10:00pm
  */
+
 
 #ifndef THREADMUTEX_H
 #define	THREADMUTEX_H
 #include <pthread.h>
 
-//线程互斥量
 class ThreadMutex
 {
 public:
@@ -45,7 +45,7 @@ public:
 private:
         pthread_mutex_t mtx;
 
-}; 
+};
 
 
 #endif	/* THREADMUTEX_H */

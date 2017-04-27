@@ -10,10 +10,11 @@
 *************************************************************************/
 
 /*
- * File:   CAutoLock.h
+ * File:   CAutoLock.cpp
  * Author: CAI
- * Created on 2016/7/29, 9:58pm
+ * Created on 2017/4/27, 10:00pm
  */
+
 
 #ifndef CAUTOLOCK_H
 #define	CAUTOLOCK_H

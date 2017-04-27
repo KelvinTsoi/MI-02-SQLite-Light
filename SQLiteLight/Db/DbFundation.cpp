@@ -207,3 +207,8 @@ int DbFundation::FindBySerialNumber(unsigned int serialNumber, CARD_S *CardInfo)
     sqlite3_free_table(dbResult);
     return DATABASE_OK;
 }
+
+int DbFundation::CountBySerialNumber(unsigned int &amount)
+{
+    return Count(amount);
+}
