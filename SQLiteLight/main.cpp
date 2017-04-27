@@ -12,14 +12,22 @@
 /*
  * File:   Main.cpp
  * Author: CAI
- * Created on 2016/7/29, 9:58pm
+ * Created on 2017/4/27, 10:00pm
  */
 
-#include "CardDB/IcCard_DbManagment.h"
+#include "Db/DbManagment.h"
 
 int main(int argc, char** argv)
 {
-	IcCard_DbManagment::GetInstance()->Init("CardDateBase.db","CardDateBase_bak.db", 60);
+    char tmpPath[256] = {0x00};
+    char bakPath[256] = {0x00};
+
+    sprintf(tmpPath, "DataBase.db");
+    sprintf(bakPath, "DateBase_bak.db");
+
+	DbManagment::GetInstance()->Init(tmpPath, bakPath, 60);
+
+	while(1);
 
 	return 0;
 }

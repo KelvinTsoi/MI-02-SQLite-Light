@@ -12,7 +12,7 @@
 /*
  * File:   DbOperator.h
  * Author: CAI
- * Created on 2016/7/29, 9:58pm
+ * Created on 2017/4/27, 10:00pm
  */
 
 #ifndef DBOPERATOR_H
@@ -55,56 +55,57 @@ public:
     /**
      * @function: module initialization;
      * @parameter: dbFile date base save path;
-     * @return： success return 0，others signify function error code;
+     * @return： success return 0, others signify function error code;
      */
     virtual int Init(char* dbFile);
 
     /**
      * @function: create date table;
-     * @return: success return 0，others signify function error code;
+     * @return: success return 0, others signify function error code;
      */
     virtual int CreateTable() = 0;
 
     /**
      * @function: open date base;
-     * @return: success return 0，others signify function error code;
+     * @return: success return 0, others signify function error code;
      */
     virtual int Open();
 
     /**
      * @function: close date base;
-     * @return: success return 0，others signify function error code;
+     * @return: success return 0, others signify function error code;
      */
     virtual int Close();
 
     /**
      * @function: asynchronous clean up date base;
-     * @return: success return 0，others signify function error code;
+     * @return: success return 0, others signify function error code;
      */
     virtual int CleanAll();
 
     /**
      * @function: check the table date structure is correct or not;
-     * @return: success return 0，others signify function error code;
+     * @return: success return 0, others signify function error code;
      */
     virtual int CheckTable();
 
     /**
      * @function: clean up date base buffer free list;
-     * @return: success return 0，others signify function error code;
+     * @return: success return 0, others signify function error code;
      */
     int CleanUpQueue();
 
     /**
      * @function: counting records of table;
-     * @return: amount of records in table;
+     * @parameter: amount sum of record in database;
+     * @return: success return 0, others signify function error code;
      */
-    virtual int Count();
+    virtual int Count(unsigned int &amount);
 
     /**
      * @function: check out the input date base is illegal or not;
      * @parameter: dbFilePath path of date base;
-     * @value: success return 0，others signify function error code;
+     * @value: success return 0, others signify function error code;
      */
     int IsDbFile(char *dbFilePath);
 
@@ -114,15 +115,15 @@ protected:
     /**
      * @function: execute SQL statement and return relative results;
      * @parameter: SQL statement string;
-     * @return: success return 0，others signify function error code;
+     * @return: success return 0, others signify function error code;
      */
     int ExecSql(char *sqlCmd);
 
     /**
      * @function: char* & unsigned int conversion;
      * @parameter: src char* type of data;
-     * @parameter: dst unsignde int type of date;
-     * @return: success return 0，others signify function error code;
+     * @parameter: dst unsigned int type of date;
+     * @return: success return 0, others signify function error code;
      */
     void uintReadFromStr(const char *src, unsigned int *dst);
 
@@ -130,7 +131,7 @@ protected:
      * @function: char* & unsigned long long conversion;
      * @parameter: src char* type of data;
      * @parameter: dst unsigned long long type of data;
-     * @return: success return 0，others signify function error code;
+     * @return: success return 0, others signify function error code;
      */
     void ullintReadFromStr(const char *src, unsigned long long int *dst);
 
@@ -138,14 +139,14 @@ protected:
      * @function: char* & unsigned char conversion;
      * @parameter: src char* type of data;
      * @parameter: dst unsigned char type of data;
-     * @return: success return 0，others signify function error code;
+     * @return: success return 0, others signify function error code;
      */
     void ucharReadFromStr(const char *src, unsigned char * dst);
 
     /**
      * @function: check out unsigned char value is overflow(1 Byte signed char) or not；
      * @parameter: src unsigned char type of data;
-     * @return: success return 0，others signify function error code;
+     * @return: success return 0, others signify function error code;
      */
     char overflow1Bytes(unsigned char src);
 
@@ -153,14 +154,14 @@ protected:
     /**
      * @function: check out unsigned int value is overflow(4 Byte signed int) or not；
      * @parameter: src unsigned int type of date;
-     * @return: success return 0，others signify function error code;
+     * @return: success return 0, others signify function error code;
      */
     int overflow4Bytes(unsigned int src);
 
     /**
      * @function: check out unsigned long long value is overflow(8 Byte signed long long ) or not；
      * @parameter: src unsigned long long type of date;
-     * @return: success return 0，others signify function error code;
+     * @return: success return 0, others signify function error code;
      */
     long long int overflow8Bytes(unsigned long long int src);
 

@@ -9,10 +9,10 @@
 **
 *************************************************************************/
 
-/* 
+/*
  * File:   DbOperator.cpp
  * Author: CAI
- * Created on 2016/7/29, 9:58pm
+ * Created on 2017/4/27, 10:00pm
  */
 
 #include "DbOperator.h"
@@ -262,7 +262,7 @@ int DbOperator::CleanUpQueue()
     return DATABASE_OK;
 }
 
-int DbOperator::Count()
+int DbOperator::Count(unsigned int &count)
 {
     int row = 0;
     int column = 0;
@@ -283,13 +283,10 @@ int DbOperator::Count()
     {
         if (column != 0)
         {
-            char*szcount = dbResult[0];
-            int count = 0;
+            char*szcount = dbResult[1];
             sscanf(szcount, "%d", &count);
-            return count;
         }
     }
-
     return 0;
 }
 

@@ -10,20 +10,20 @@
 *************************************************************************/
 
 /*
- * File:   IcCard_DbExtension.cpp
+ * File:   DbExtension.cpp
  * Author: CAI
- * Created on 2016/7/29, 9:58pm
+ * Created on 2017/4/27, 10:00pm
  */
 
-#include "IcCard_DbExtension.h"
+#include "DbExtension.h"
 extern "C"
 {
 	#include "../md5/md5.h"
 }
 
-IcCard_DbExtension::IcCard_DbExtension()
+DbExtension::DbExtension()
 {
-    m_bakupThreadId = NULL;
+    m_bakupThreadId = 0;
     m_pDbBase = NULL;
     m_pDbBakBase = NULL;
     bzero(m_bakDbFileMD5Value, sizeof (m_bakDbFileMD5Value));
@@ -34,11 +34,11 @@ IcCard_DbExtension::IcCard_DbExtension()
     m_bInit = false;
 }
 
-IcCard_DbExtension::~IcCard_DbExtension()
+DbExtension::~DbExtension()
 {
 }
 
-int IcCard_DbExtension::Init(char* dbFile, char* dbFileBak, unsigned int interval)
+int DbExtension::Init(char* dbFile, char* dbFileBak, unsigned int interval)
 {
     AUTO_LOCK(mtx);
     if (m_bInit)
@@ -91,7 +91,7 @@ int IcCard_DbExtension::Init(char* dbFile, char* dbFileBak, unsigned int interva
     }
 
     bAutoBakSwitch = false;
-    ret = pthread_create(&m_bakupThreadId, NULL, IcCard_DbExtension::AutoBakThreadCallback, this);
+    ret = pthread_create(&m_bakupThreadId, NULL, DbExtension::AutoBakThreadCallback, this);
     if (ret != 0)
     {
         printf("Thread creation failed.\n");
@@ -102,7 +102,7 @@ int IcCard_DbExtension::Init(char* dbFile, char* dbFileBak, unsigned int interva
     return DATABASE_OK;
 }
 
-int IcCard_DbExtension::LoadLocalDB()
+int DbExtension::LoadLocalDB()
 {
     AUTO_LOCK(mtx);
     if (!m_bInit)
@@ -119,7 +119,7 @@ int IcCard_DbExtension::LoadLocalDB()
     return DATABASE_OK;
 }
 
-int IcCard_DbExtension::ReplaceDbFile(char* dbFilePath)
+int DbExtension::ReplaceDbFile(char* dbFilePath)
 {
     AUTO_LOCK(mtx);
 
@@ -154,12 +154,12 @@ int IcCard_DbExtension::ReplaceDbFile(char* dbFilePath)
     return DATABASE_OK;
 }
 
-int IcCard_DbExtension::UnInit()
+int DbExtension::UnInit()
 {
     AUTO_LOCK(mtx);
     int ret;
     m_bInit = false;
-    while (m_bakupThreadId != NULL)
+    while (m_bakupThreadId != 0)
     {
         usleep(100000);
     }
@@ -179,7 +179,7 @@ int IcCard_DbExtension::UnInit()
     return DATABASE_OK;
 }
 
-int IcCard_DbExtension::ManulBak()
+int DbExtension::ManulBak()
 {
     AUTO_LOCK(mtx);
     if (!m_bInit)
@@ -199,7 +199,7 @@ int IcCard_DbExtension::ManulBak()
     return DATABASE_OK;
 }
 
-int IcCard_DbExtension::CleanAll()
+int DbExtension::CleanAll()
 {
     AUTO_LOCK(mtx);
     if (!m_bInit)
@@ -212,7 +212,7 @@ int IcCard_DbExtension::CleanAll()
     return DATABASE_OK;
 }
 
-int IcCard_DbExtension::CopyFile(char *srcFilePath, char *dstFilePath)
+int DbExtension::CopyFile(char *srcFilePath, char *dstFilePath)
 {
     int from_fd, to_fd;
     int bytes_read, bytes_write;
@@ -233,7 +233,7 @@ int IcCard_DbExtension::CopyFile(char *srcFilePath, char *dstFilePath)
 
     printf("Ready for Writing!\n");
 
-    while (bytes_read = read(from_fd, buffer, BUFFER_SIZE))
+    while ((bytes_read = read(from_fd, buffer, BUFFER_SIZE))>0)
     {
         if ((bytes_read == -1)&&(errno != EINTR))
             break;
@@ -241,7 +241,7 @@ int IcCard_DbExtension::CopyFile(char *srcFilePath, char *dstFilePath)
         {
             ptr = buffer;
 
-            while (bytes_write = write(to_fd, ptr, bytes_read))
+            while ((bytes_write = write(to_fd, ptr, bytes_read))>0)
             {
                 if ((bytes_write == -1)&&(errno != EINTR))
                     break;
@@ -265,7 +265,7 @@ int IcCard_DbExtension::CopyFile(char *srcFilePath, char *dstFilePath)
     return DATABASE_OK;
 }
 
-int IcCard_DbExtension::CompareToBakDb(long long int dbFileSize, unsigned char md5Value[])
+int DbExtension::CompareToBakDb(long long int dbFileSize, unsigned char md5Value[])
 {
     AUTO_LOCK(mtx);
 
@@ -278,13 +278,13 @@ int IcCard_DbExtension::CompareToBakDb(long long int dbFileSize, unsigned char m
     return DATABASE_OK;
 }
 
-int IcCard_DbExtension::StopAutoBak(void)
+int DbExtension::StopAutoBak(void)
 {
     bAutoBakSwitch = false;
     return DATABASE_OK;
 }
 
-int IcCard_DbExtension::StartAutoBak()
+int DbExtension::StartAutoBak()
 {
     AUTO_LOCK(mtx);
     if (!m_bInit)
@@ -293,14 +293,14 @@ int IcCard_DbExtension::StartAutoBak()
     return DATABASE_OK;
 }
 
-void* IcCard_DbExtension::AutoBakThreadCallback(void *arg)
+void* DbExtension::AutoBakThreadCallback(void *arg)
 {
-    IcCard_DbExtension *ptr = (IcCard_DbExtension *) arg;
+    DbExtension *ptr = (DbExtension *) arg;
     ptr->AutoBakThreadFunc();
     pthread_exit(NULL);
 }
 
-void* IcCard_DbExtension::AutoBakThreadFunc()
+void* DbExtension::AutoBakThreadFunc()
 {
     int ret;
     long int fileSize = 0;
@@ -340,10 +340,12 @@ void* IcCard_DbExtension::AutoBakThreadFunc()
         usleep(200000);
     }
 
-    m_bakupThreadId = NULL;
+    m_bakupThreadId = 0;
+
+    return NULL;
 }
 
-long long int IcCard_DbExtension::GetDbFileSize(char *dbFilePath)
+long long int DbExtension::GetDbFileSize(char *dbFilePath)
 {
     if (access(dbFilePath, F_OK) != 0)
         return 0;
@@ -355,7 +357,7 @@ long long int IcCard_DbExtension::GetDbFileSize(char *dbFilePath)
     return size;
 }
 
-int IcCard_DbExtension::GetDbFileMD5(char *dbFilePath, unsigned char md5Value[])
+int DbExtension::GetDbFileMD5(char *dbFilePath, unsigned char md5Value[])
 {
     FILE *fp = fopen(dbFilePath, "rb");
     MD5_CTX mdContext;

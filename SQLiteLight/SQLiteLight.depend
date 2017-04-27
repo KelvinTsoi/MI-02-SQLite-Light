@@ -1,0 +1,137 @@
+# depslib dependency file v1.0
+1493277092 source:/root/WorkingSpace/SQLiteLight/main.cpp
+	"Db/DbManagment.h"
+
+1493197778 source:/root/WorkingSpace/SQLiteLight/sqlite3/sqlite3.c
+	<stdarg.h>
+	"config.h"
+	<stdint.h>
+	<inttypes.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<assert.h>
+	<stddef.h>
+	<TargetConditionals.h>
+	<windows.h>
+	<ctype.h>
+	<time.h>
+	<sys/sysctl.h>
+	<malloc/malloc.h>
+	<libkern/OSAtomic.h>
+	<malloc.h>
+	<pthread.h>
+	<math.h>
+	<sys/types.h>
+	<sys/stat.h>
+	<fcntl.h>
+	<unistd.h>
+	<sys/time.h>
+	<errno.h>
+	<sys/mman.h>
+	<sys/ioctl.h>
+	<semaphore.h>
+	<limits.h>
+	<sys/file.h>
+	<sys/param.h>
+	<sys/mount.h>
+	<utime.h>
+	<sys/dcmd_blk.h>
+	<sys/statvfs.h>
+	<dlfcn.h>
+	<sys/cygwin.h>
+	<errno.h>
+	<tcl.h>
+	"sqlite3rtree.h"
+	<unicode/utypes.h>
+	<unicode/uregex.h>
+	<unicode/ustring.h>
+	<unicode/ucol.h>
+	<unicode/ubrk.h>
+	<unicode/utf16.h>
+
+1493197778 source:/root/WorkingSpace/SQLiteLight/Db/DbOperator.cpp
+	"DbOperator.h"
+	<iostream>
+	<fstream>
+	<string>
+
+1493197778 /root/WorkingSpace/SQLiteLight/Db/DbOperator.h
+	"DbDefine.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<math.h>
+	<unistd.h>
+	<signal.h>
+	<fcntl.h>
+	<errno.h>
+	<pthread.h>
+	<unistd.h>
+	<limits.h>
+	<sys/types.h>
+	<sys/stat.h>
+	<sys/time.h>
+	<sys/wait.h>
+	"../sqlite3/sqlite3.h"
+	"../CAutoLock.h"
+
+1493197778 /root/WorkingSpace/SQLiteLight/Db/DbDefine.h
+
+1493197778 /root/WorkingSpace/SQLiteLight/sqlite3/sqlite3.h
+	<stdarg.h>
+
+1493197778 /root/WorkingSpace/SQLiteLight/CAutoLock.h
+	"ThreadMutex.h"
+
+1493197778 /root/WorkingSpace/SQLiteLight/ThreadMutex.h
+	<pthread.h>
+
+1493274592 source:/root/WorkingSpace/SQLiteLight/Db/IcCard_DbExtension.cpp
+	"IcCard_DbExtension.h"
+	"../md5/md5.h"
+
+1493197778 /root/WorkingSpace/SQLiteLight/Db/IcCard_DbExtension.h
+	"DbOperator.h"
+
+1493276845 /root/WorkingSpace/SQLiteLight/md5/md5.h
+	<string.h>
+
+1493197778 source:/root/WorkingSpace/SQLiteLight/Db/IcCard_DbFundation.cpp
+	"IcCard_DbFundation.h"
+
+1493197778 /root/WorkingSpace/SQLiteLight/Db/IcCard_DbFundation.h
+	"DbOperator.h"
+
+1493274599 source:/root/WorkingSpace/SQLiteLight/Db/IcCard_DbManagment.cpp
+	"IcCard_DbManagment.h"
+	"../md5/md5.h"
+
+1493197778 /root/WorkingSpace/SQLiteLight/Db/IcCard_DbManagment.h
+	"IcCard_DbFundation.h"
+	"IcCard_DbExtension.h"
+
+1493197778 source:/root/WorkingSpace/SQLiteLight/md5/md5.c
+	"md5.h"
+
+1493276902 source:/root/WorkingSpace/SQLiteLight/Db/DbExtension.cpp
+	"DbExtension.h"
+	"../md5/md5.h"
+
+1493276648 /root/WorkingSpace/SQLiteLight/Db/DbExtension.h
+	"DbOperator.h"
+
+1493276454 source:/root/WorkingSpace/SQLiteLight/Db/DbFundation.cpp
+	"DbFundation.h"
+
+1493276619 /root/WorkingSpace/SQLiteLight/Db/DbFundation.h
+	"DbOperator.h"
+
+1493276502 source:/root/WorkingSpace/SQLiteLight/Db/DbManagment.cpp
+	"DbManagment.h"
+	"../md5/md5.h"
+
+1493276606 /root/WorkingSpace/SQLiteLight/Db/DbManagment.h
+	"DbFundation.h"
+	"DbExtension.h"
+
