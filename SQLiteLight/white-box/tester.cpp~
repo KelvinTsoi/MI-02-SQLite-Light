@@ -9,7 +9,7 @@
 **
 *************************************************************************/
 
-#include "white-box/Tester.h"
+
 
 /*
  * File:   main.cpp
@@ -17,11 +17,11 @@
  * Created on 2017/4/27, 10:00pm
  */
 
-Tester demo;
-
 int main(int argc, char **argv)
 {
-    demo.Process();
+
+
+
 
     return 0;
 }

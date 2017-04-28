@@ -33,15 +33,15 @@
 			<Add option="-fexceptions" />
 		</Compiler>
 		<Unit filename="CAutoLock.h" />
-		<Unit filename="CardDB/DbDefine.h" />
-		<Unit filename="CardDB/DbOperator.cpp" />
-		<Unit filename="CardDB/DbOperator.h" />
-		<Unit filename="CardDB/IcCard_DbExtension.cpp" />
-		<Unit filename="CardDB/IcCard_DbExtension.h" />
-		<Unit filename="CardDB/IcCard_DbFundation.cpp" />
-		<Unit filename="CardDB/IcCard_DbFundation.h" />
-		<Unit filename="CardDB/IcCard_DbManagment.cpp" />
-		<Unit filename="CardDB/IcCard_DbManagment.h" />
+		<Unit filename="Db/DbDefine.h" />
+		<Unit filename="Db/DbExtension.cpp" />
+		<Unit filename="Db/DbExtension.h" />
+		<Unit filename="Db/DbFundation.cpp" />
+		<Unit filename="Db/DbFundation.h" />
+		<Unit filename="Db/DbManagment.cpp" />
+		<Unit filename="Db/DbManagment.h" />
+		<Unit filename="Db/DbOperator.cpp" />
+		<Unit filename="Db/DbOperator.h" />
 		<Unit filename="ThreadMutex.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="md5/md5.c">

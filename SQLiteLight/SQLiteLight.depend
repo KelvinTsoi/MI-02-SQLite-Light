@@ -1,6 +1,6 @@
 # depslib dependency file v1.0
-1493277092 source:/root/WorkingSpace/SQLiteLight/main.cpp
-	"Db/DbManagment.h"
+1493361866 source:/root/WorkingSpace/SQLiteLight/main.cpp
+	"white-box/Tester.h"
 
 1493197778 source:/root/WorkingSpace/SQLiteLight/sqlite3/sqlite3.c
 	<stdarg.h>
@@ -50,13 +50,13 @@
 	<unicode/ubrk.h>
 	<unicode/utf16.h>
 
-1493197778 source:/root/WorkingSpace/SQLiteLight/Db/DbOperator.cpp
+1493278476 source:/root/WorkingSpace/SQLiteLight/Db/DbOperator.cpp
 	"DbOperator.h"
 	<iostream>
 	<fstream>
 	<string>
 
-1493197778 /root/WorkingSpace/SQLiteLight/Db/DbOperator.h
+1493278591 /root/WorkingSpace/SQLiteLight/Db/DbOperator.h
 	"DbDefine.h"
 	<stdio.h>
 	<stdlib.h>
@@ -76,15 +76,15 @@
 	"../sqlite3/sqlite3.h"
 	"../CAutoLock.h"
 
-1493197778 /root/WorkingSpace/SQLiteLight/Db/DbDefine.h
+1493278388 /root/WorkingSpace/SQLiteLight/Db/DbDefine.h
 
 1493197778 /root/WorkingSpace/SQLiteLight/sqlite3/sqlite3.h
 	<stdarg.h>
 
-1493197778 /root/WorkingSpace/SQLiteLight/CAutoLock.h
+1493280005 /root/WorkingSpace/SQLiteLight/CAutoLock.h
 	"ThreadMutex.h"
 
-1493197778 /root/WorkingSpace/SQLiteLight/ThreadMutex.h
+1493280024 /root/WorkingSpace/SQLiteLight/ThreadMutex.h
 	<pthread.h>
 
 1493274592 source:/root/WorkingSpace/SQLiteLight/Db/IcCard_DbExtension.cpp
@@ -94,7 +94,7 @@
 1493197778 /root/WorkingSpace/SQLiteLight/Db/IcCard_DbExtension.h
 	"DbOperator.h"
 
-1493276845 /root/WorkingSpace/SQLiteLight/md5/md5.h
+1493278783 /root/WorkingSpace/SQLiteLight/md5/md5.h
 	<string.h>
 
 1493197778 source:/root/WorkingSpace/SQLiteLight/Db/IcCard_DbFundation.cpp
@@ -111,27 +111,52 @@
 	"IcCard_DbFundation.h"
 	"IcCard_DbExtension.h"
 
-1493197778 source:/root/WorkingSpace/SQLiteLight/md5/md5.c
+1493278879 source:/root/WorkingSpace/SQLiteLight/md5/md5.c
 	"md5.h"
 
-1493276902 source:/root/WorkingSpace/SQLiteLight/Db/DbExtension.cpp
+1493278385 source:/root/WorkingSpace/SQLiteLight/Db/DbExtension.cpp
 	"DbExtension.h"
 	"../md5/md5.h"
 
-1493276648 /root/WorkingSpace/SQLiteLight/Db/DbExtension.h
+1493278737 /root/WorkingSpace/SQLiteLight/Db/DbExtension.h
 	"DbOperator.h"
 
-1493276454 source:/root/WorkingSpace/SQLiteLight/Db/DbFundation.cpp
+1493279754 source:/root/WorkingSpace/SQLiteLight/Db/DbFundation.cpp
 	"DbFundation.h"
 
-1493276619 /root/WorkingSpace/SQLiteLight/Db/DbFundation.h
+1493279798 /root/WorkingSpace/SQLiteLight/Db/DbFundation.h
 	"DbOperator.h"
 
-1493276502 source:/root/WorkingSpace/SQLiteLight/Db/DbManagment.cpp
+1493279908 source:/root/WorkingSpace/SQLiteLight/Db/DbManagment.cpp
 	"DbManagment.h"
 	"../md5/md5.h"
 
-1493276606 /root/WorkingSpace/SQLiteLight/Db/DbManagment.h
+1493279941 /root/WorkingSpace/SQLiteLight/Db/DbManagment.h
 	"DbFundation.h"
 	"DbExtension.h"
+
+1493362523 /root/WorkingSpace/SQLiteLight/white-box/Tester.h
+	<termios.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<math.h>
+	<unistd.h>
+	<signal.h>
+	<fcntl.h>
+	<errno.h>
+	<pthread.h>
+	<unistd.h>
+	<limits.h>
+	<sys/types.h>
+	<sys/stat.h>
+	<sys/time.h>
+	"../sqlite3/sqlite3.h"
+	"../Db/DbDefine.h"
+	"../Db/DbManagment.h"
+	"../CAutoLock.h"
+	"../ThreadMutex.h"
+
+1493362796 source:/root/WorkingSpace/SQLiteLight/white-box/Tester.cpp
+	"Tester.h"
 
