@@ -12,22 +12,29 @@
 
 
 /*
- * File:   main.cpp
+ * File:   Tester.cpp
  * Author: CAI
  * Created on 2017/4/27, 10:00pm
  */
 
  #include "Tester.h"
 
+ bool permitToExecuteParallelTest = false;
 
 Tester::Tester()
 {
-    ;
+    thread_add = 0;
+    thread_find = 0;
+    thread_delete = 0;
+    thread_backup = 0;
 }
 
 Tester::~Tester()
 {
-    ;
+    thread_add = 0;
+    thread_find = 0;
+    thread_delete = 0;
+    thread_backup = 0;
 }
 
 int Tester::Process(void)
@@ -106,7 +113,7 @@ int Tester::Process(void)
             if (Scmd[i][0] == '\0')
                 break;
 
-            ret = parseNDCmdForDb(Scmd[i]);
+            ret = MLevelMenu(Scmd[i]);
             if (ret < 0)
                 break;
         }
@@ -115,13 +122,134 @@ int Tester::Process(void)
     return 0;
 }
 
-int Tester::parseNDAssistDb(const char *cmd)
+int Tester::ALevelMenu(const char *cmd)
 {
-    //wait for auto tester
+    Stime startime;
+    Stime endtime;
+    char pcmd[128]="";
+    int ret = 0;
+
+    while(1)
+    {
+        ShowAssistInfo();
+        memset(pcmd, 0, 128);
+        gets(pcmd);
+
+        if (pcmd[0] == 'b')
+            return 0;
+
+        if (pcmd[0] == '1')
+        {
+            printf("Automatic Insertion's Quantity: ");
+            memset(pcmd, 0, sizeof (pcmd));
+            gets(pcmd);
+            Gettime_usec(&startime);
+
+            for (int zz = 1; zz <= atol(pcmd); zz++)
+            {
+                CARD_S icData;
+                icData.SerialNumber = CreateRandomSerialNumber();
+                icData.ExpiryTime = GetNowTime();
+                icData.CardID = CreateRandomIdentificationNumber();
+                icData.CardType = zz % 2 ? 0x01 : 0x00;
+                ret = DbManagment::GetInstance()->Add(icData);
+                if (ret != 0)
+                {
+                    PRI_TIME_TM("Automatic Insertion Aborted! Return Code[%d]\r\n", ret);
+                    BLOCK();
+                    return -1;
+                }
+            }
+            PRI_TIME_TM("Automatic Insertion Complete! Return Code[%d]\r\n", ret);
+            BLOCK();
+        }
+        else if (pcmd[0] == '2')
+        {
+            printf("Automatic Module Testing Cycle-Times: ");
+            memset(pcmd, 0, sizeof (pcmd));
+            gets(pcmd);
+            strcpy(rptfile.cnt, pcmd);
+
+            for(int zz = 1; zz <= atoi(pcmd); zz++)
+            {
+                CARD_S icData;
+                icData.SerialNumber = CreateRandomSerialNumber();
+                icData.ExpiryTime = GetNowTime();
+                icData.CardID = CreateRandomIdentificationNumber();
+                icData.CardType = zz % 2 ? 0x01 : 0x00;
+                Gettime_usec(&startime);
+                ret = DbManagment::GetInstance()->Add(icData);
+                if (ret != 0)
+                {
+                    printf("Add error\n");
+                    return -1;
+                }
+                PRI_TIME_TM("Insert Single Record Complete! Return Code[%d]\r\n", ret);
+                GET_TIME(rptfile.atime);
+
+                icData.ExpiryTime = GetNowTime()+1;
+                Gettime_usec(&startime);
+                ret = DbManagment::GetInstance()->Add(icData);
+                if (ret != 0)
+                {
+                    printf("Add error\n");
+                    return -1;
+                }
+                PRI_TIME_TM("Update Single Record Complete! Return Code[%d]\r\n", ret);
+                GET_TIME(rptfile.mtime);
+
+                Gettime_usec(&startime);
+                ret = DbManagment::GetInstance()->Delete(icData.SerialNumber);
+                if (ret != 0)
+                {
+                    printf("Delete error\n");
+                    return -1;
+                }
+                PRI_TIME_TM("Delete Single Record Complete! Return Code[%d]\r\n", ret);
+                GET_TIME(rptfile.dtime);
+
+                Gettime_usec(&startime);
+                ret = DbManagment::GetInstance()->ManulBak();
+                if (ret != 0)
+                {
+                    printf("ManulBak error %d\n", ret);
+                    return -1;
+                }
+                PRI_TIME_TM("Manual Backup Complete! Return Code[%d]\r\n", ret);
+                GET_TIME(rptfile.btime);
+
+                system("clear");
+
+                ret = CreatReport();
+                if (ret != 0)
+                {
+                    printf("Create Report Error %d\n", ret);
+                    return -1;
+                }
+            }
+        }
+        else if (pcmd[0] == '3')
+        {
+            ParallelStress();
+        }
+        else
+        {
+            printf("Unvalidated Input:\n");
+            continue;
+        }
+
+        if (ret != 0)
+        {
+            printf("%s error status[%d]\n", cmd, ret);
+            printf("any key to continue:");
+            Getch();
+        }
+    }
+
     return 0;
 }
 
-int Tester::parseNDCmdForDb(const char *cmd)
+int Tester::MLevelMenu(const char *cmd)
 {
     int ret = 0;
     unsigned int count = 0;
@@ -320,8 +448,24 @@ int Tester::parseNDCmdForDb(const char *cmd)
     }
     else if (0 == strcmp(cmd, "15"))
     {
+        unsigned int amount = 0;
+        ret = DbManagment::GetInstance()->CountBySerialNumber(amount);
+        PRI_TIME_TM("Counting Records in DataBase Complete! Return Code[%d]\r\n", ret);
+        if (ret != 0)
+        {
+            BLOCK();
+            return -1;
+        }
+        else
+        {
+            printf("Records Amount: %u\r\n", amount);
+        }
+        BLOCK();
+    }
+    else if (0 == strcmp(cmd, "16"))
+    {
         system("clear");
-        //ret = parseNDAssistDb(cmd);
+        ret = ALevelMenu(cmd);
     }
     else
     {
@@ -335,53 +479,6 @@ int Tester::parseNDCmdForDb(const char *cmd)
     }
 
     return 0;
-}
-
-void Tester::str32ToInt128(char *src, unsigned char dstVaule[16])
-{
-    unsigned int position_s = 0;
-    unsigned int position_p = 0;
-
-    while (position_p != 32)
-    {
-        // 0xa0
-        if (src[position_s] >= '0' && src[position_s] <= '9')
-        {
-            dstVaule[position_p] = ((unsigned char) src[position_s] - 48) * 16;
-            position_s++;
-        }
-        else if (src[position_s] >= 'A' && src[position_s] <= 'F')
-        {
-            dstVaule[position_p] = ((unsigned char) src[position_s] - 55) * 16;
-            position_s++;
-        }
-        else if (src[position_s] >= 'a' && src[position_s] <= 'f')
-        {
-            dstVaule[position_p] = ((unsigned char) src[position_s] - 87) * 16;
-            position_s++;
-        }
-
-        // 0xaa = 0x0a + 0xa0
-        if (src[position_s] >= '0' && src[position_s] <= '9')
-        {
-            dstVaule[position_p] += (unsigned char) src[position_s] - 48;
-            position_s++;
-        }
-        else if (src[position_s] >= 'A' && src[position_s] <= 'F')
-        {
-            dstVaule[position_p] += (unsigned char) src[position_s] - 55;
-            position_s++;
-        }
-        else if (src[position_s] >= 'a' && src[position_s] <= 'f')
-        {
-            dstVaule[position_p] += (unsigned char) src[position_s] - 87;
-            position_s++;
-        }
-
-        position_p++;
-    }
-
-    dstVaule[16]=0x00;
 }
 
 void Tester::Gettime_usec(Stime *tm)
@@ -429,10 +526,10 @@ int Tester::CreatReport(void)
     }
     else
     {
-        strcpy(sum_buf, " Data Size/Ten Thousand  Insert(s)/Millisecond   Delete(s)/Millisecond  Update(s)/Millisecond  BackUp/Millisecond:\r\n");
+        strcpy(sum_buf, "\tData Size/Ten Thousand\tInsert(s)/Millisecond\tDelete(s)/Millisecond\tUpdate(s)/Millisecond\tBackUp/Millisecond:\r\n");
     }
 
-    sprintf(sreport, "%s%6.6s      %10.10d       %10.10d      %10.10d      %10.10d \n ", sum_buf, rptfile.cnt, rptfile.atime, rptfile.dtime, rptfile.mtime, rptfile.btime);
+    sprintf(sreport, "%s%6.6s\t\t\t%10.10d\t\t\t%10.10d\t\t\t%10.10d\t\t\r%10.10d \n ", sum_buf, rptfile.cnt, rptfile.atime, rptfile.dtime, rptfile.mtime, rptfile.btime);
     printf("\n%s\n", sreport);
 
     FILE *fp;
@@ -484,8 +581,240 @@ void Tester::ShowHelpInfo(void)
     printf("\t12 Invoke ReplaceDbFile\r\n");
     printf("\t13 Invoke CleanAll\r\n");
     printf("\t14 Invoke CompareToBakDb\r\n");
-    printf("\t15 Auxiliary\r\n");
+    printf("\t15 Invoke CountBySerialNumber\r\n");
+    printf("\t16 Auxiliary\r\n");
     printf("Commander: ");
 
+    return;
+}
+
+void Tester::ShowAssistInfo(void)
+{
+    printf("\r\nAuxiliary Options\r\n");
+    printf("\tb  Back to Parent Directory\r\n");
+    printf("\t1  Automatic Insertion\r\n");
+    printf("\t2  Automatic Testing Module and Generating Report\r\n");
+    printf("\t3  Parallel Automatic Testing Module\r\n");
+    printf("Commander: ");
+
+    return;
+}
+
+unsigned int Tester::CreateRandomIdentificationNumber(void)
+{
+    srand(GetNowUs());
+    return (unsigned int)rand();
+}
+
+unsigned int Tester::CreateRandomSerialNumber(void)
+{
+    srand(GetNowUs());
+    return (unsigned int)((unsigned long long)RAND_LIMIT*rand()/(RAND_MAX));
+}
+
+unsigned int Tester::GetNowTime(void)
+{
+    struct timeval clk0;
+    struct timezone tz;
+    gettimeofday(&clk0, &tz);
+    return clk0.tv_sec;
+}
+
+unsigned int Tester::GetNowUs(void)
+{
+    struct timeval clk0;
+    struct timezone tz;
+    gettimeofday(&clk0, &tz);
+    return clk0.tv_usec;
+}
+
+void Tester::ParallelStress(void)
+{
+    permitToExecuteParallelTest = true;
+
+    act.sa_handler = Ouch;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = 0;
+    sigaction(SIGINT, &act, 0);
+
+    pthread_create(&thread_add, NULL, RunParallelAddingThreadProc, (void *)this);
+    pthread_create(&thread_find, NULL, RunParallelFindingThreadProc, (void *)this);
+    pthread_create(&thread_delete, NULL, RunParallelDeletingThreadProc, (void *)this);
+    pthread_create(&thread_backup, NULL, RunParallelBakingThreadProc, (void *)this);
+
+    pthread_join(thread_add, NULL);
+    pthread_join(thread_find, NULL);
+    pthread_join(thread_delete, NULL);
+    pthread_join(thread_backup, NULL);
+
+    return;
+}
+
+void* Tester::RunParallelAddingThreadProc(void* param)
+{
+    Tester* pthis = (Tester*) param;
+    pthis->ParallelAdding();
+    return NULL;
+}
+
+void* Tester::RunParallelFindingThreadProc(void* param)
+{
+    Tester* pthis = (Tester*) param;
+    pthis->ParallelFinding();
+    return NULL;
+}
+
+void* Tester::RunParallelDeletingThreadProc(void* param)
+{
+    Tester* pthis = (Tester*) param;
+    pthis->ParallelDeleting();
+    return NULL;
+}
+
+void* Tester::RunParallelBakingThreadProc(void* param)
+{
+    Tester* pthis = (Tester*) param;
+    pthis->ParallelBaking();
+    return NULL;
+}
+
+void Tester::ParallelAdding(void)
+{
+    int ret = 0;
+    int z = 10000;
+    Stime startime;
+    Stime endtime;
+
+    CARD_S icData;
+    icData.ExpiryTime = GetNowTime();
+    icData.CardID = CreateRandomIdentificationNumber();
+    icData.CardType = z % 2 ? 0x01 : 0x00;
+
+    while (permitToExecuteParallelTest)
+    {
+        Gettime_usec(&startime);
+        icData.SerialNumber = z++;
+        ret = DbManagment::GetInstance()->Add(icData);
+        PRI_TIME_TMOFRT("Insert Single Record Complete! Return Code[%d]\r\n", ret);
+        usleep(PAUSETIME);
+    };
+
+    return;
+}
+
+void Tester::ParallelFinding(void)
+{
+    int ret = 0;
+    int z = 10003;
+    Stime startime;
+    Stime endtime;
+
+    CARD_S icData;
+    while (permitToExecuteParallelTest)
+    {
+        z++;
+        Gettime_usec(&startime);
+        memset(&icData, 0, sizeof (CARD_S));
+        ret = DbManagment::GetInstance()->FindBySerialNumber(z, &icData);
+        PRI_TIME_TMOFRT("Find Single Record Complete! Return Code[%d]\r\n", ret);
+        usleep(PAUSETIME);
+    };
+
+    return;
+}
+
+void Tester::ParallelDeleting(void)
+{
+    int ret = 0;
+    int z = 10002;
+    Stime startime;
+    Stime endtime;
+
+    while (permitToExecuteParallelTest)
+    {
+        z++;
+        Gettime_usec(&startime);
+        ret = DbManagment::GetInstance()->Delete(z);
+        PRI_TIME_TMOFRT("Delete Single Record Complete! Return Code[%d]\r\n", ret);
+        usleep(PAUSETIME);
+    };
+
+    return;
+}
+
+void Tester::ParallelBaking(void)
+{
+    int ret = 0;
+    Stime startime;
+    Stime endtime;
+
+    while (permitToExecuteParallelTest)
+    {
+        Gettime_usec(&startime);
+        ret = DbManagment::GetInstance()->ManulBak();
+        PRI_TIME_TMOFRT("Manual Backup Complete! Return Code[%d]\r\n", ret);
+        usleep(PAUSETIME);
+    };
+
+    return;
+}
+
+void Tester::str32ToInt128(char *src, unsigned char dstVaule[16])
+{
+    unsigned int position_s = 0;
+    unsigned int position_p = 0;
+
+    while (position_p != 32)
+    {
+        // 0xa0
+        if (src[position_s] >= '0' && src[position_s] <= '9')
+        {
+            dstVaule[position_p] = ((unsigned char) src[position_s] - 48) * 16;
+            position_s++;
+        }
+        else if (src[position_s] >= 'A' && src[position_s] <= 'F')
+        {
+            dstVaule[position_p] = ((unsigned char) src[position_s] - 55) * 16;
+            position_s++;
+        }
+        else if (src[position_s] >= 'a' && src[position_s] <= 'f')
+        {
+            dstVaule[position_p] = ((unsigned char) src[position_s] - 87) * 16;
+            position_s++;
+        }
+
+        // 0xaa = 0x0a + 0xa0
+        if (src[position_s] >= '0' && src[position_s] <= '9')
+        {
+            dstVaule[position_p] += (unsigned char) src[position_s] - 48;
+            position_s++;
+        }
+        else if (src[position_s] >= 'A' && src[position_s] <= 'F')
+        {
+            dstVaule[position_p] += (unsigned char) src[position_s] - 55;
+            position_s++;
+        }
+        else if (src[position_s] >= 'a' && src[position_s] <= 'f')
+        {
+            dstVaule[position_p] += (unsigned char) src[position_s] - 87;
+            position_s++;
+        }
+
+        position_p++;
+    }
+
+    dstVaule[16]=0x00;
+}
+
+void Tester::Ouch(int sig)
+{
+    if(permitToExecuteParallelTest)
+    {
+        permitToExecuteParallelTest = false;
+        printf("\r\n\r\n"
+               "<***Receive Suspend Signal!***>\r\n"
+                "<***Ready for Shut Down Module***>\r\n"
+                "\r\n");
+    }
     return;
 }

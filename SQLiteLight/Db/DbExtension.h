@@ -43,8 +43,8 @@ public:
     virtual int Init(char* dbFile, char* dbFileBak, unsigned int interval);
 
     /**
-     * function: reverse backup(from back up data base to memory data base);
-     * return: success return 0, others signify function error code;
+     * @function: reverse backup(from back up data base to memory data base);
+     * @return: success return 0, others signify function error code;
      */
     virtual int LoadLocalDB();
 
@@ -97,7 +97,7 @@ public:
      * @function: compare current data base and back up data base according file size and md5 value;
      * @parameter: dbFileSize current data base file size;
      * @parameter: md5Value current data base file md5 value;
-     * @return: @return: both data base are same return 0, others signify function error code;
+     * @return: both data base are same return 0, others signify function error code;
      */
     int CompareToBakDb(long long int dbFileSize, unsigned char md5Value[]);
 

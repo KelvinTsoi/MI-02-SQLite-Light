@@ -52,6 +52,8 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="sqlite3/sqlite3.h" />
+		<Unit filename="white-box/Tester.cpp" />
+		<Unit filename="white-box/Tester.h" />
 		<Extensions>
 			<envvars />
 			<code_completion />

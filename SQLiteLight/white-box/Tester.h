@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <signal.h>
 
 #include "../sqlite3/sqlite3.h"
 
@@ -46,7 +47,7 @@
 
 #define DB_TMP "/tmp/Lightning.db"
 #define DB_BAK "/data/Lightning_bak.db"
-#define REPORT_FILE_NAME "report.log"
+#define REPORT_FILE_NAME "/data/report.log"
 
 typedef struct
 {
@@ -64,8 +65,28 @@ typedef struct
 } ReportFile;
 
 
+//Switch to Control Parallel Testing Module
+extern bool permitToExecuteParallelTest;
+
+//latency time in parallel testing module
+#define PAUSETIME   50000
+
+//coefficient to limit the rand range
+#define RAND_LIMIT  32768
+
+//characters transition
 #define cti(cc)  (cc-('0'-0))
 
+//debugging information for parallel testing module
+#define PRI_TIME_TMOFRT(format, ...) \
+Gettime_usec(&endtime); \
+printf(""format"", ##__VA_ARGS__); \
+if (endtime.usec >= startime.usec) \
+    printf("Time-Consuming = %d.%ds\n", endtime.sec - startime.sec, endtime.usec - startime.usec); \
+else \
+    printf("Time-Consuming = %d.%d\n", endtime.sec - startime.sec-1, 1000000+endtime.usec - startime.usec);
+
+//debugging information
 #define PRI_TIME_TM(format, ...) \
 system("clear");    \
 Gettime_usec(&endtime); \
@@ -75,32 +96,38 @@ if (endtime.usec >= startime.usec) \
 else \
     printf("Time-Consuming = %d.%d\n", endtime.sec - startime.sec-1, 1000000+endtime.usec - startime.usec);
 
+//voluntary waiting
 #define BLOCK() \
 printf("Any key to continue"); \
 Getch(); \
 system("clear");
 
+//get milliseconds
 #define GET_TIME(zz) \
 if (endtime.usec >= startime.usec) \
         zz = (endtime.sec - startime.sec)*1000+(endtime.usec - startime.usec)/1000; \
 else  \
         zz = (endtime.sec - startime.sec-1)*1000+(1000000+endtime.usec - startime.usec)/1000;
 
+//reduction input code
 #define INPUT_CARD_SERINUM() \
 printf("4 Bytes Serial Number in Card: "); \
 memset(pcmd, 0, sizeof(pcmd)); \
 gets(pcmd);
 
+//reduction input code
 #define INPUT_CARD_ID() \
 printf("8 Bytes Identification Number in Card: "); \
 memset(pcmd, 0, sizeof(pcmd)); \
 gets(pcmd);
 
+//reduction input code
 #define INPUT_CARD_EXPIRY() \
 printf("Card expiration date\r\nthe minutes passing from 1970-01-01 00：00：00 tile now: "); \
 memset(pcmd, 0, sizeof(pcmd)); \
 gets(pcmd);
 
+//reduction input code
 #define INPUT_CARD_TYPE() \
 printf("Card type\r\n0x01 signify as white list card, 0x02 signify as black list card: "); \
 memset(pcmd, 0, sizeof(pcmd)); \
@@ -110,32 +137,195 @@ class Tester
 {
 public:
 
+    /**
+     * Summary: Class Tester's Constructor
+     */
     Tester();
 
+    /**
+     * Summary: Class Tester's Destructor
+     */
     ~Tester();
 
+    /**
+     * Summary: White-Box Module Entrance
+     * Return: Return code has not any practical significance
+     */
     int Process(void);
 
 private:
 
+    /**
+     * Summary: Main Menu, which control nearly all interface about DataBase
+     * Parameters:
+     *  cmd: Command from console
+     * Return: Return zero if function success, other values signify function error code
+     */
+    int MLevelMenu(const char *cmd);
+
+    /**
+     * Summary: Assistance Menu, which content Automatic testing and Parallel testing Module
+     * Parameters:
+     *  cmd: Command from console
+     * Return: Return zero if function success, other values signify function error code
+     */
+    int ALevelMenu(const char *cmd);
+
+    /**
+     * Summary: Main Menu Print Info
+     */
     void ShowHelpInfo(void);
 
+    /**
+     * Summary: Main Menu Print Info
+     */
     void ShowAssistInfo(void);
 
-    int Getch(void);
+private:
 
-    void str32ToInt128(char *src, unsigned char dstVaule[16]);
+    /**
+     * Summary: Parallel Testing Module Entrance
+     */
+    void ParallelStress(void);
 
-    void Gettime_usec(Stime *tm);
+    /**
+     * Summary: Callback function for Parallel Adding Module
+     * Parameters:
+     *  param: Used for transmit current Instance
+     * Return: Return code has not any practical significance
+     */
+    static void* RunParallelAddingThreadProc(void* param);
 
-    int CreatReport(void);
+    /**
+     * Summary: Callback function for Parallel Finding Module
+     * Parameters:
+     *  param: Used for transmit current Instance
+     * Return: Return code has not any practical significance
+     */
+    static void* RunParallelFindingThreadProc(void* param);
 
-    int parseNDCmdForDb(const char *cmd);
+    /**
+     * Summary: Callback function for Parallel Deleting Module
+     * Parameters:
+     *  param: Used for transmit current Instance
+     * Return: Return code has not any practical significance
+     */
+    static void* RunParallelDeletingThreadProc(void* param);
 
-    int parseNDAssistDb(const char *cmd);
+    /**
+     * Summary: Callback function for Parallel Baking Module
+     * Parameters:
+     *  param: Used for transmit current Instance
+     * Return: Return code has not any practical significance
+     */
+    static void* RunParallelBakingThreadProc(void* param);
+
+    /**
+     * Summary: Executive function for Parallel Adding Module
+     */
+    void ParallelAdding(void);
+
+    /**
+     * Summary: Executive function for Parallel Finding Module
+     */
+    void ParallelFinding(void);
+
+    /**
+     * Summary: Executive function for Parallel Deleting Module
+     */
+    void ParallelDeleting(void);
+
+    /**
+     * Summary: Executive function for Parallel Baking Module
+     */
+    void ParallelBaking(void);
 
 private:
+
+    /**
+     * Summary: Grab input from console
+     * Return: Return zero if function success, other values signify function error code
+     */
+    int Getch(void);
+
+    /**
+     * Summary: Get Current Second and Millisecond
+     * Parameters:
+     *  tm: Structure used for store Second and Millisecond
+     */
+    void Gettime_usec(Stime *tm);
+
+
+    /**
+     * Summary: Get Current Second
+     * Return: Return Current Second
+     */
+    unsigned int GetNowTime(void);
+
+
+    /**
+     * Summary: Get Current Microsecond
+     * Return: Return Current Microsecond
+     */
+    unsigned int GetNowUs(void);
+
+
+    /**
+     * Summary: Create report for Automatic Testing Module
+     * Return: Return zero if function success, other values signify function error code
+     */
+    int CreatReport(void);
+
+
+    /**
+     * Summary: Get random Serial Number
+     * Return: Calculated Serial Number
+     */
+    unsigned int CreateRandomSerialNumber(void);
+
+
+    /**
+     * Summary: Get random Identification Number
+     * Return: Calculated Identification Number
+     */
+    unsigned int CreateRandomIdentificationNumber(void);
+
+
+    /**
+     * Summary: Transform md5 value from String To Char[]
+     * Parameters:
+     *  src: source string store md5 value
+     *  dstVaule: md5 value store in 16Bytes array
+     */
+    void str32ToInt128(char *src, unsigned char dstVaule[16]);
+
+
+    /**
+     * Summary: Signal Trigger
+     * Parameters:
+     *  sig: semaphore
+     */
+    static void Ouch(int sig);
+
+private:
+
+    //Structure used for store execution time from Automatic Testing Module
     ReportFile rptfile;
+
+    //Adding Thread for Parallel Testing Module
+    pthread_t thread_add;
+
+    //Finding Thread for Parallel Testing Module
+    pthread_t thread_find;
+
+    //Deleting Thread for Parallel Testing Module
+    pthread_t thread_delete;
+
+    //Backup Thread for Parallel Testing Module
+    pthread_t thread_backup;
+
+    //Semaphore
+    struct sigaction act;
 };
 
 
