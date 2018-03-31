@@ -46,8 +46,8 @@
 #include "../ThreadMutex.h"
 
 #define DB_TMP "/tmp/Lightning.db"
-#define DB_BAK "/data/Lightning_bak.db"
-#define REPORT_FILE_NAME "/data/report.log"
+#define DB_BAK "Lightning_bak.db"
+#define REPORT_FILE_NAME "report.log"
 
 typedef struct
 {
