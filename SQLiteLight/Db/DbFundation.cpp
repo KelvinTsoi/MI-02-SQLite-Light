@@ -20,7 +20,7 @@
 DbFundation::DbFundation()
 {
     bzero(m_dbTableName, sizeof (m_dbTableName));
-    sprintf(m_dbTableName, "card_table");
+    sprintf(m_dbTableName, "happy_table");
 }
 
 DbFundation::~DbFundation()
@@ -31,9 +31,9 @@ int DbFundation::CreateTable()
 {
     int ret = 0;
 
-    char strCmd[200] = {0};
+    char strCmd[256] = {0};
 
-    sprintf(strCmd, "CREATE TABLE \"%s\" (\"serial_num\" INT NOT NULL,\"card_id\" BIGINT,\"card_type\" TINYINT, \"expiry_date\" INT,PRIMARY KEY ( \"serial_num\" ));", m_dbTableName);
+	sprintf(strCmd, "CREATE TABLE \"%s\" (\"seqence_number\" INT NOT NULL,\"data_type\" TINYINT,\"expire_time\" INT,\"data\" BIGINT,\"content\" TEXT(128), PRIMARY KEY ( \"seqence_number\" ));", m_dbTableName);
 
     ret = ExecSql(strCmd);
     if (ret != DATABASE_OK)
@@ -45,24 +45,30 @@ int DbFundation::CreateTable()
     return DATABASE_OK;
 }
 
-int DbFundation::Add(CARD_S CardInfo)
+int DbFundation::Add(DATA_S DataInfo)
 {
-    if( CardInfo.SerialNumber == 0 || CardInfo.CardID == 0 )
+    if( DataInfo.Sequence == 0 || DataInfo.Data == 0 )
     {
-    	printf("SerialNumber or CardID in this card is illegal!(SerialNumber == 0x00 || CardID == 0x00)\n");
+    	printf("Sequence Number or Data in this Info is illegal!\r\n");
         return DATABASE_ILLIGAL_DATA;
     }
 
-    char strCmd[200] = {0};
+    char strCmd[256] = {0};
 
-    sprintf(strCmd, "REPLACE INTO %s ( serial_num,card_id,card_type,expiry_date ) VALUES ( %d,%lld,%d,%d );",
-            m_dbTableName,
-            overflow4Bytes(CardInfo.SerialNumber),
-            overflow8Bytes(CardInfo.CardID),
-            overflow1Bytes(CardInfo.CardType),
-            overflow4Bytes(CardInfo.ExpiryTime)
-    );
-
+    switch(m_tableInfo.struct_number)
+    {
+        case DATABASE_STRUCT_MEMBER:
+            sprintf(strCmd, m_replaceRecordCommand,
+                overflow4Bytes(DataInfo.Sequence),
+                overflow1Bytes(DataInfo.Type),
+                overflow4Bytes(DataInfo.ExpiryTime),
+                overflow8Bytes(DataInfo.Data),
+                DataInfo.Content);
+            break;
+        default:
+            return DATABASE_TABLE_COMP_ERROR;
+    }
+       
     int ret = ExecSql(strCmd);
 
     if (ret != DATABASE_OK)
@@ -71,7 +77,7 @@ int DbFundation::Add(CARD_S CardInfo)
     return DATABASE_OK;
 }
 
-int DbFundation::Add(CARD_S CardInfo[], const int insertDataSetSize)
+int DbFundation::Add(DATA_S DataInfo[], const int insertDataSetSize)
 {
     int ret;
 
@@ -102,11 +108,9 @@ int DbFundation::Add(CARD_S CardInfo[], const int insertDataSetSize)
     }
     sqlite3_finalize(stmt1);
 
-    char insertSQL[128] = {0x00};
-    sprintf(insertSQL, "INSERT INTO %s VALUES(?,?,?,?)", m_dbTableName);
     sqlite3_stmt* stmt2 = NULL;
 
-    if ((ret = sqlite3_prepare_v2(db, insertSQL, strlen(insertSQL), &stmt2, NULL)) != SQLITE_OK)
+    if ((ret = sqlite3_prepare_v2(db, m_insertRecordCommand, strlen(m_insertRecordCommand), &stmt2, NULL)) != SQLITE_OK)
     {
         if (stmt2)
             sqlite3_finalize(stmt2);
@@ -115,24 +119,29 @@ int DbFundation::Add(CARD_S CardInfo[], const int insertDataSetSize)
 
     for (int i = 0; i < insertDataSetSize; i++)
     {
-        if( CardInfo[i].SerialNumber == 0 || CardInfo[i].CardID == 0 )
+        if( DataInfo[i].Sequence == 0 || DataInfo[i].Data == 0 )
         {
-        	printf("SerialNumber or CardID in this card is illegal!(SerialNumber == 0x00 || CardID == 0x00)\n");
+			printf("Sequence Number or Data in this Info is illegal!\r\n");
             continue;
         }
-
-        sqlite3_bind_int(stmt2, 1, CardInfo[i].SerialNumber);
-        sqlite3_bind_int64(stmt2, 2, CardInfo[i].CardID);
-        sqlite3_bind_int(stmt2, 3, CardInfo[i].CardType);
-        sqlite3_bind_int(stmt2, 4, CardInfo[i].ExpiryTime);
-
-
+        
+        switch(m_tableInfo.struct_number)
+        {
+            case DATABASE_STRUCT_MEMBER:
+                sqlite3_bind_int(stmt2, 1, DataInfo[i].Sequence);
+                sqlite3_bind_int(stmt2, 2, DataInfo[i].Type);
+                sqlite3_bind_int(stmt2, 3, DataInfo[i].ExpiryTime);
+                sqlite3_bind_int64(stmt2, 4, DataInfo[i].Data);
+                sqlite3_bind_text(stmt2, 5, DataInfo[i].Content, -1, NULL);
+                break;
+            default:
+                return DATABASE_TABLE_COMP_ERROR;
+        }
+        
         ret = sqlite3_step(stmt2);
 
         if (ret == SQLITE_CONSTRAINT)
-        {
-            //if there is same data in list...
-        }
+        	;//LOG_E("KEY has already been here!\n");  
         else if (ret != SQLITE_DONE && ret != SQLITE_CONSTRAINT)
         {
             sqlite3_finalize(stmt2);
@@ -165,28 +174,53 @@ int DbFundation::Add(CARD_S CardInfo[], const int insertDataSetSize)
     return ret;
 }
 
-int DbFundation::Delete(unsigned int serialNumber)
+int DbFundation::Delete(unsigned int SequenceNumber)
 {
     int ret;
-    char strCmd[200] = {0};
-    sprintf(strCmd, "DELETE FROM %s WHERE serial_num =%d;", m_dbTableName, overflow4Bytes(serialNumber));
+
+    char strCmd[256] = {0};
+    
+    sprintf(strCmd, m_deleteRecordCommand, overflow4Bytes(SequenceNumber));
     ret = ExecSql(strCmd);
+    
+    if(ret != DATABASE_OK)
+        return ret;
+
+    /*
+    char sqlCmdClear[20] = {0};
+    sprintf(sqlCmdClear, "VACUUM;");
+    ret = ExecSql(sqlCmdClear);
+    */ 
+
     return ret;
 }
 
-int DbFundation::Update(CARD_S CardInfo)
+int DbFundation::Update(DATA_S DataInfo)
 {
-    char strCmd[200] = {0};
-    sprintf(strCmd, "UPDATE %s SET card_id =%lld, card_type =%d, expiry_data =%d WHERE serial_num =%d;"
-            , m_dbTableName, overflow8Bytes(CardInfo.CardID), overflow1Bytes(CardInfo.CardType), overflow4Bytes(CardInfo.ExpiryTime), overflow4Bytes(CardInfo.SerialNumber));
+    char strCmd[256] = {0};
+    
+    switch(m_tableInfo.struct_number)
+    {
+        case DATABASE_STRUCT_MEMBER:
+            sprintf(strCmd, m_updateRecordCommand,
+                    overflow1Bytes(DataInfo.Type), 
+                    overflow4Bytes(DataInfo.ExpiryTime), 
+                    overflow8Bytes(DataInfo.Data), 
+                    DataInfo.Content,
+                    overflow4Bytes(DataInfo.Sequence));
+            break;
+        default:
+            return DATABASE_TABLE_COMP_ERROR;
+    }
+
     return ExecSql(strCmd);
 }
 
-int DbFundation::FindBySerialNumber(unsigned int serialNumber, CARD_S *CardInfo)
+int DbFundation::FindBySeqenceNumber(unsigned int SequenceNumber, DATA_S *DataInfo)
 {
-    char strCmd[200] = {0};
-
-    sprintf(strCmd, "SELECT * FROM \"%s\" WHERE serial_num =%d;", m_dbTableName, overflow4Bytes(serialNumber));
+    memset(DataInfo->Content, 0x00, sizeof(DataInfo->Content));
+    char strCmd[256] = {0};
+    sprintf(strCmd, "SELECT * FROM \"%s\" WHERE seqence_number =%d;", m_dbTableName, overflow4Bytes(SequenceNumber));
     char *zErrMsg = 0;
     int row = 0;
     int column = 0;
@@ -194,21 +228,47 @@ int DbFundation::FindBySerialNumber(unsigned int serialNumber, CARD_S *CardInfo)
     sqlite3_get_table(db, strCmd, &dbResult, &row, &column, &zErrMsg);
     if (row == 0 && column == 0)
     {
-    	printf("This Serial Number does not exist in %s!\n", strCmd);
+    	printf("This Sequence Number does not exist in %s!\n", strCmd);
         return DATABASE_KEY_NOT_HERE;
     }
     else
     {
-        uintReadFromStr(dbResult[POSITION_SERIALNUMBER], &CardInfo->SerialNumber);
-        ullintReadFromStr(dbResult[POSITION_CARDID], &CardInfo->CardID);
-        ucharReadFromStr(dbResult[POSITION_CARDTYPE], &CardInfo->CardType);
-        uintReadFromStr(dbResult[POSITION_EXPIRYDATE], &CardInfo->ExpiryTime);
+        for(int i = 0; i < m_tableInfo.struct_number; i++)
+        {
+            if(strcmp(dbResult[i], m_tableInfo.struct_info[i].s_name)==0)
+            {
+                switch(i)
+                {
+                    case 0:
+                        uintReadFromStr(dbResult[i+m_tableInfo.struct_number], &DataInfo->Sequence);
+                        break;
+                    case 1:
+                        ucharReadFromStr(dbResult[i+m_tableInfo.struct_number], &DataInfo->Type);
+                        break;
+                    case 2:
+                        uintReadFromStr(dbResult[i+m_tableInfo.struct_number], &DataInfo->ExpiryTime);
+                        break;
+                    case 3:
+                        ullintReadFromStr(dbResult[i+m_tableInfo.struct_number], &DataInfo->Data);
+                        break;
+                    case 4:
+                        sprintf(DataInfo->Content, dbResult[i+m_tableInfo.struct_number]);
+                        break;
+                    default:
+                        continue;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
     }
     sqlite3_free_table(dbResult);
     return DATABASE_OK;
 }
 
-int DbFundation::CountBySerialNumber(unsigned int &amount)
+int DbFundation::CountBySeqenceNumber(unsigned int &amount)
 {
     return Count(amount);
 }

@@ -32,15 +32,10 @@
 #define DATABASE_PTHREAD            108     /* Thread creation failed */
 #define DATABASE_NOT_OPEN           109     /* Date base has not been open */
 #define DATABASE_KEY_NOT_HERE       110     /* Primary key does not exist */
-#define DATABASE_ILLIGAL_DATA       111     /* Illegal card date */
+#define DATABASE_ILLIGAL_DATA       111     /* Illegal data */
+#define DATABASE_TABLE_COMP_ERROR   112     /* Data Base construction matching error */
 #define DATABASE_ILLEGAL_DB_FILE    201     /* Object file is not data base */
-#define NUMBER_OVERFLOW             300     /* Date length overflow */
-
-// Position of data in query results queue;
-#define POSITION_SERIALNUMBER       4      /* Card Serial Number */
-#define POSITION_CARDID             5      /* Card Identification Number */
-#define POSITION_CARDTYPE           6      /* Card Type */
-#define POSITION_EXPIRYDATE         7      /* Card Expiration Date */
+#define NUMBER_OVERFLOW             300     /* Data length overflow */
 
 // String conversion cardinal number;
 #define DECIMAL_BASE                48
@@ -48,33 +43,43 @@
 // Date base file reading buffer size;
 #define BUFFER_SIZE                 4096
 
+// Date struct members
+#define DATABASE_STRUCT_MEMBER		5 
+
+
 /**
- * Card info structure:
- * 4 Bytes Serial Number + 8 Bytes Identification Number
+ * Data info structure:
+ * 4 Bytes Sequence Number + 1 Bytes Data Type + 4 Bytes Data's Period of Validity +
+ * 8 Bytes Identification Number + 128 Bytes Content
  */
 typedef struct
 {
     /**
-     * 4 Bytes Serial Number in Card
+     * 4 Bytes sequence number
      */
-    unsigned int SerialNumber;
+    unsigned int Sequence;
+
+    /** 
+     * 1 Bytes data type
+     */
+    unsigned char Type;
 
     /**
-     * 8 Bytes Identification Number in Card
-     */
-    unsigned long long CardID;
-
-    /**
-     * Card type, 0x01 signify as white list card, 0x02 signify as black list card;
-     */
-    unsigned char CardType;
-
-    /**
-     * Card expiration date, the minutes passing from 1970-01-01 00：00：00 tile now;
+     * 4 Bytes data's period of validity
      */
     unsigned int ExpiryTime;
 
-} CARD_S;
+    /**
+     * 8 Bytes data
+     */
+    unsigned long long Data;
+
+    /**
+     * 128 Bytes Content
+     */
+    char Content[128];
+
+} DATA_S;
 
 
 #endif /* DBDEFINE_H */

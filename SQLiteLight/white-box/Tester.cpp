@@ -147,12 +147,13 @@ int Tester::ALevelMenu(const char *cmd)
 
             for (int zz = 1; zz <= atol(pcmd); zz++)
             {
-                CARD_S icData;
-                icData.SerialNumber = CreateRandomSerialNumber();
-                icData.ExpiryTime = GetNowTime();
-                icData.CardID = CreateRandomIdentificationNumber();
-                icData.CardType = zz % 2 ? 0x01 : 0x00;
-                ret = DbManagment::GetInstance()->Add(icData);
+                DATA_S iData;
+                iData.Sequence = CreateRandomSerialNumber();
+                iData.ExpiryTime = GetNowTime();
+                iData.Data = CreateRandomIdentificationNumber();
+                iData.Type = zz % 2 ? 0x01 : 0x00;
+                sprintf(iData.Content, "AutoSet");
+                ret = DbManagment::GetInstance()->Add(iData);
                 if (ret != 0)
                 {
                     PRI_TIME_TM("Automatic Insertion Aborted! Return Code[%d]\r\n", ret);
@@ -172,37 +173,38 @@ int Tester::ALevelMenu(const char *cmd)
 
             for(int zz = 1; zz <= atoi(pcmd); zz++)
             {
-                CARD_S icData;
-                icData.SerialNumber = CreateRandomSerialNumber();
-                icData.ExpiryTime = GetNowTime();
-                icData.CardID = CreateRandomIdentificationNumber();
-                icData.CardType = zz % 2 ? 0x01 : 0x00;
+                DATA_S iData;
+                iData.Sequence = CreateRandomSerialNumber();
+                iData.ExpiryTime = GetNowTime();
+                iData.Data = CreateRandomIdentificationNumber();
+                iData.Type = zz % 2 ? 0x01 : 0x00;
+                sprintf(iData.Content, "AutoSet");
                 Gettime_usec(&startime);
-                ret = DbManagment::GetInstance()->Add(icData);
+                ret = DbManagment::GetInstance()->Add(iData);
                 if (ret != 0)
                 {
-                    printf("Add error\n");
+                    printf("Add error.\r\n");
                     return -1;
                 }
-                PRI_TIME_TM("Insert Single Record Complete! Return Code[%d]\r\n", ret);
+                PRI_TIME_TM("Insert Single Record Complete! Return Code[%d].\r\n", ret);
                 GET_TIME(rptfile.atime);
 
-                icData.ExpiryTime = GetNowTime()+1;
+                iData.ExpiryTime = GetNowTime()+1;
                 Gettime_usec(&startime);
-                ret = DbManagment::GetInstance()->Add(icData);
+                ret = DbManagment::GetInstance()->Add(iData);
                 if (ret != 0)
                 {
-                    printf("Add error\n");
+                    printf("Add error.\r\n");
                     return -1;
                 }
                 PRI_TIME_TM("Update Single Record Complete! Return Code[%d]\r\n", ret);
                 GET_TIME(rptfile.mtime);
 
                 Gettime_usec(&startime);
-                ret = DbManagment::GetInstance()->Delete(icData.SerialNumber);
+                ret = DbManagment::GetInstance()->Delete(iData.Sequence);
                 if (ret != 0)
                 {
-                    printf("Delete error\n");
+                    printf("Delete error.\r\n");
                     return -1;
                 }
                 PRI_TIME_TM("Delete Single Record Complete! Return Code[%d]\r\n", ret);
@@ -212,7 +214,7 @@ int Tester::ALevelMenu(const char *cmd)
                 ret = DbManagment::GetInstance()->ManulBak();
                 if (ret != 0)
                 {
-                    printf("ManulBak error %d\n", ret);
+                    printf("ManulBak error %d\r\n", ret);
                     return -1;
                 }
                 PRI_TIME_TM("Manual Backup Complete! Return Code[%d]\r\n", ret);
@@ -305,23 +307,25 @@ int Tester::MLevelMenu(const char *cmd)
     }
     else if (0 == strcmp(cmd, "7"))
     {
-        CARD_S icData;
-        INPUT_CARD_SERINUM();
-        icData.SerialNumber = atol(pcmd);
-        INPUT_CARD_ID();
-        icData.CardID = atol(pcmd);
-        INPUT_CARD_EXPIRY();
-        icData.ExpiryTime = atol(pcmd);
-        INPUT_CARD_TYPE();
-        icData.CardType = atol(pcmd);
+        DATA_S iData;
+		INPUT_INFO_SEQENCE();
+        iData.Sequence = atol(pcmd);
+        INPUT_INFO_TYPE();
+        iData.Type = atol(pcmd);
+        INPUT_INFO_EXPIRY();
+        iData.ExpiryTime = atol(pcmd);
+   		INPUT_INFO_DATA();
+        iData.Data = atol(pcmd);
+        INPUT_INFO_CONTENT();
+        sprintf(iData.Content, pcmd);
         Gettime_usec(&startime);
-        ret = DbManagment::GetInstance()->Add(icData);
+        ret = DbManagment::GetInstance()->Add(iData);
         PRI_TIME_TM("Insert Single Record Complete! Return Code[%d]\r\n", ret);
         BLOCK();
     }
     else if (0 == strcmp(cmd, "8"))
     {
-        INPUT_CARD_SERINUM();
+        INPUT_INFO_SEQENCE();
         Gettime_usec(&startime);
         ret = DbManagment::GetInstance()->Delete(atol(pcmd));
         PRI_TIME_TM("Delete Single Record Complete! Return Code[%d]\r\n", ret);
@@ -329,10 +333,10 @@ int Tester::MLevelMenu(const char *cmd)
     }
     else if (0 == strcmp(cmd, "9"))
     {
-        INPUT_CARD_SERINUM();
+        INPUT_INFO_SEQENCE();
         Gettime_usec(&startime);
-        CARD_S icData;
-        ret = DbManagment::GetInstance()->FindBySerialNumber(atol(pcmd), &icData);
+        DATA_S iData;
+        ret = DbManagment::GetInstance()->FindBySeqenceNumber(atol(pcmd), &iData);
         PRI_TIME_TM("Find Single Record Complete! Return Code[%d]\r\n", ret);
         if (ret != 0)
         {
@@ -342,8 +346,16 @@ int Tester::MLevelMenu(const char *cmd)
         else
         {
             printf("Record at this time:\r\n");
-            printf("SerialNumber=%d CardID=%lld ExpiryTime=%d CardType=%d\r\n",
-               icData.SerialNumber, icData.CardID, icData.ExpiryTime, icData.CardType);
+            printf("Seqence Number = %d  Data Type = %d Expire Time = %d Data = %lld ",
+               iData.Sequence, iData.Type, iData.ExpiryTime, iData.Data);
+            if(iData.Content != NULL)
+            {
+            	printf("Content = %s\r\n", iData.Content);
+            }
+            else
+            {
+            	printf("Content = NULL\r\n");
+            }
         }
         BLOCK();
     }
@@ -353,19 +365,12 @@ int Tester::MLevelMenu(const char *cmd)
         memset(pcmd, 0, sizeof (pcmd));
         gets(pcmd);
         count = atoi(pcmd);
-        CARD_S icData[1024];
+        DATA_S icData[1024];
         memset(icData, 0, sizeof(icData));
         for(z = 0; z <count; z++)
         {
             printf("\r\n-------%d--------\r\n", z+1);
-            INPUT_CARD_SERINUM();
-            icData[z].SerialNumber = atol(pcmd);
-            INPUT_CARD_ID();
-            icData[z].CardID = atol(pcmd);
-            INPUT_CARD_EXPIRY();
-            icData[z].ExpiryTime = atol(pcmd);
-            INPUT_CARD_TYPE();
-            icData[z].CardType = atol(pcmd);
+
         }
         Gettime_usec(&startime);
         ret = DbManagment::GetInstance()->Add(icData, count);
@@ -379,18 +384,18 @@ int Tester::MLevelMenu(const char *cmd)
         gets(pcmd);
         count = atoi(pcmd);
         z = 0;
-        unsigned int serinum[1024];
-        memset(serinum, 0, sizeof(serinum));
+        unsigned int SeqenceNumber[1024];
+        memset(SeqenceNumber, 0, sizeof(SeqenceNumber));
         while(count-- > 0)
         {
             printf("\r\n-------%d--------\r\n", z+1);
-            INPUT_CARD_SERINUM();
-            serinum[z] = atol(pcmd);
+			INPUT_INFO_SEQENCE();
+            SeqenceNumber[z] = atol(pcmd);
             z++;
         };
 
         Gettime_usec(&startime);
-        ret = DbManagment::GetInstance()->Delete(serinum, count);
+        ret = DbManagment::GetInstance()->Delete(SeqenceNumber, count);
         PRI_TIME_TM("Delete Multiple Record Complete! Return Code[%d]\r\n", ret);
         BLOCK();
     }
@@ -419,7 +424,7 @@ int Tester::MLevelMenu(const char *cmd)
         }
         system("clear");
         char pbufcmd[256] = "";
-        sprintf(pbufcmd, "sqlite3 %s \"select count(serial_num) from table_card;\"", DB_TMP);
+        sprintf(pbufcmd, "sqlite3 %s \"select count(seqence_number) from happy_table;\"", DB_TMP);
         system(pbufcmd);
         Gettime_usec(&startime);
         ret = DbManagment::GetInstance()->CleanAll();
@@ -449,7 +454,7 @@ int Tester::MLevelMenu(const char *cmd)
     else if (0 == strcmp(cmd, "15"))
     {
         unsigned int amount = 0;
-        ret = DbManagment::GetInstance()->CountBySerialNumber(amount);
+        ret = DbManagment::GetInstance()->CountBySeqenceNumber(amount);
         PRI_TIME_TM("Counting Records in DataBase Complete! Return Code[%d]\r\n", ret);
         if (ret != 0)
         {
@@ -685,16 +690,17 @@ void Tester::ParallelAdding(void)
     Stime startime;
     Stime endtime;
 
-    CARD_S icData;
-    icData.ExpiryTime = GetNowTime();
-    icData.CardID = CreateRandomIdentificationNumber();
-    icData.CardType = z % 2 ? 0x01 : 0x00;
+    DATA_S iData;
+    iData.ExpiryTime = GetNowTime();
+    iData.Data = CreateRandomIdentificationNumber();
+    iData.Type = z % 2 ? 0x01 : 0x00;
+    sprintf(iData.Content, "AutoTest");
 
     while (permitToExecuteParallelTest)
     {
         Gettime_usec(&startime);
-        icData.SerialNumber = z++;
-        ret = DbManagment::GetInstance()->Add(icData);
+        iData.Sequence = z++;
+        ret = DbManagment::GetInstance()->Add(iData);
         PRI_TIME_TMOFRT("Insert Single Record Complete! Return Code[%d]\r\n", ret);
         usleep(PAUSETIME);
     };
@@ -709,13 +715,13 @@ void Tester::ParallelFinding(void)
     Stime startime;
     Stime endtime;
 
-    CARD_S icData;
+    DATA_S iData;
     while (permitToExecuteParallelTest)
     {
         z++;
         Gettime_usec(&startime);
-        memset(&icData, 0, sizeof (CARD_S));
-        ret = DbManagment::GetInstance()->FindBySerialNumber(z, &icData);
+        memset(&iData, 0, sizeof (DATA_S));
+        ret = DbManagment::GetInstance()->FindBySeqenceNumber(z, &iData);
         PRI_TIME_TMOFRT("Find Single Record Complete! Return Code[%d]\r\n", ret);
         usleep(PAUSETIME);
     };

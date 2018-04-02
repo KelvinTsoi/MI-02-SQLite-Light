@@ -31,48 +31,48 @@ public:
 
     /**
      * @function: insert batch records into table;
-     * @parameter: CardInfo Card info array;
+     * @parameter: Data info array;
      * @parameter: insertDataSetSize array size;
      * @return: success return 0, others signify function error code;
      */
-    int Add(CARD_S CardInfo[], unsigned int size);
+    int Add(DATA_S DataInfo[], unsigned int size);
 
     /**
      * @function: insert record into table;
-     * @parameter: CardInfo card info;
+     * @parameter: Data info;
      * @return: success return 0, others signify function error code;
      */
-    int Add(CARD_S CardInfo);
+    int Add(DATA_S DataInfo);
 
     /**
      * @function: delete record from table;
-     * @parameter: serialNumber card serial number;
+     * @parameter: Seqence Number;
      * @return: success return 0, others signify function error code;
      */
-    int Delete(unsigned int serialNumber);
+    int Delete(unsigned int SeqenceNumber);
 
     /**
      * @function: delete batch record from table;
-     * @parameter: serialNumber serial number array;
+     * @parameter: Seqence Number array;
      * @parameter: size array size;
      * @return: success return 0, others signify function error code;
      */
-    int Delete(unsigned int serialNumber[], unsigned int size);
+    int Delete(unsigned int SeqenceNumber[], unsigned int size);
 
     /**
      * @function: find record from table;
-     * @parameter: serialNumber card serial number;
-     * @parameter: CardInfo card info;
+     * @parameter: Seqence Number;
+     * @parameter: Data info;
      * @return: success return 0, others signify function error code;
      */
-    int FindBySerialNumber(unsigned int serialNumber, CARD_S *CardInfo);
+    int FindBySeqenceNumber(unsigned int SeqenceNumber, DATA_S *DataInfo);
 
     /**
      * @function: counting records of table;
      * @parameter: amount sum of record in database;
      * @return: success return 0, others signify function error code;
      */
-    int CountBySerialNumber(unsigned int &amount);
+    int CountBySeqenceNumber(unsigned int &amount);
 
     /**
      * @function: GetInstance method in singleton pattern;

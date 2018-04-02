@@ -44,7 +44,7 @@ public:
      * @parameter: CardInfo card info;
      * @return: success return 0, others signify function error code;
      */
-    int Add(CARD_S CardInfo);
+    int Add(DATA_S DataInfo);
 
     /**
      * @function: insert batch records into table;
@@ -52,36 +52,36 @@ public:
      * @parameter: insertDataSetSize array size;
      * @return: success return 0, others signify function error code;
      */
-    int Add(CARD_S CardInfo[], const int insertDataSetSize);
+    int Add(DATA_S DataInfo[], const int insertDataSetSize);
 
     /**
      * @function: delete record from table;
      * @parameter: serialNumber card serial number;
      * @return: success return 0, others signify function error code;
      */
-    int Delete(unsigned int serialNumber);
+    int Delete(unsigned int SeqenceNumber);
 
     /**
      * @function: update record from table;
      * @parameter: CardInfo card info;
      * @return: success return 0, others signify function error code;
      */
-    int Update(CARD_S CardInfo);
+    int Update(DATA_S DataInfo);
 
     /**
      * @function: find record from table;
-     * @parameter: serialNumber card serial number;
-	 * @parameter: CardInfo card info;
+     * @parameter: Seqence Number;
+	 * @parameter: Data info;
      * @return: success return 0, others signify function error code;
      */
-    int FindBySerialNumber(unsigned int serialNumber, CARD_S *CardInfo);
+    int FindBySeqenceNumber(unsigned int SeqenceNumber, DATA_S *DataInfo);
 
     /**
      * @function: counting records of table;
      * @parameter: amount sum of record in database;
      * @return: success return 0, others signify function error code;
      */
-    int CountBySerialNumber(unsigned int &amount);
+    int CountBySeqenceNumber(unsigned int &amount);
 };
 
 #endif /* _DBFUNDATION_H */

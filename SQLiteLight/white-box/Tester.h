@@ -110,26 +110,32 @@ else  \
         zz = (endtime.sec - startime.sec-1)*1000+(1000000+endtime.usec - startime.usec)/1000;
 
 //reduction input code
-#define INPUT_CARD_SERINUM() \
-printf("4 Bytes Serial Number in Card: "); \
+#define INPUT_INFO_SEQENCE() \
+printf("4 Bytes Serial Number in Data: "); \
 memset(pcmd, 0, sizeof(pcmd)); \
 gets(pcmd);
 
 //reduction input code
-#define INPUT_CARD_ID() \
-printf("8 Bytes Identification Number in Card: "); \
+#define INPUT_INFO_EXPIRY() \
+printf("Data expiration date\r\nthe minutes passing from 1970-01-01 00：00：00 tile now: "); \
 memset(pcmd, 0, sizeof(pcmd)); \
 gets(pcmd);
 
 //reduction input code
-#define INPUT_CARD_EXPIRY() \
-printf("Card expiration date\r\nthe minutes passing from 1970-01-01 00：00：00 tile now: "); \
+#define INPUT_INFO_TYPE() \
+printf("Data type\r\n0x01 signify as white list data, 0x02 signify as black list data: "); \
 memset(pcmd, 0, sizeof(pcmd)); \
 gets(pcmd);
 
 //reduction input code
-#define INPUT_CARD_TYPE() \
-printf("Card type\r\n0x01 signify as white list card, 0x02 signify as black list card: "); \
+#define INPUT_INFO_DATA() \
+printf("8 Bytes Identification Number in Data: "); \
+memset(pcmd, 0, sizeof(pcmd)); \
+gets(pcmd);
+
+//reduction input code
+#define INPUT_INFO_CONTENT() \
+printf("128 Bytes String Content in Data: "); \
 memset(pcmd, 0, sizeof(pcmd)); \
 gets(pcmd);
 

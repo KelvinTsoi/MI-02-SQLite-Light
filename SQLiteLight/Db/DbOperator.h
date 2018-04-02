@@ -18,6 +18,7 @@
 #ifndef DBOPERATOR_H
 #define DBOPERATOR_H
 #include "DbDefine.h"
+#include "DbInfo.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -101,6 +102,13 @@ public:
      * @return: success return 0, others signify function error code;
      */
     virtual int Count(unsigned int &amount);
+    
+    /**
+     * @function: counting records of table;
+     * @function: reading construction information of Table after Creation;
+     * @return: success return 0, others signify function error code;
+     */
+    virtual int ReLoadInfo();
 
     /**
      * @function: check out the input date base is illegal or not;
@@ -108,6 +116,16 @@ public:
      * @value: success return 0, others signify function error code;
      */
     int IsDbFile(char *dbFilePath);
+    
+    
+    /**
+     * @function: reading construction information of Table
+     * @param nCount Argument number
+     * @param pValue Argument value
+     * @param pName Argument name
+     * @value: success return 0, others signify function error code;
+     */
+    int loadTableInfo(int nCount, char** pValue, char** pName);
 
 
 protected:
@@ -118,6 +136,28 @@ protected:
      * @return: success return 0, others signify function error code;
      */
     int ExecSql(char *sqlCmd);
+    
+    /**
+     * @function: get construction information of Table;
+     * @return: success return 0, others signify function error code;
+     */
+    int GetDbInfo();   
+    
+    /**
+     * @function: generating SQL commands according to construction information of Table;
+     * @return: success return 0, others signify function error code;
+     */
+    int CommandGenerator();
+    
+    /**
+     * @function: call back function of getting construction information of Table;
+     * @DataInfo param dynamic parameter
+     * @param nCount Argument number
+     * @param pValue Argument value
+     * @param pName Argument name
+     * @value: success return 0, others signify function error code;
+     */
+    static int loadTableInfoCallBack(void* param, int nCount, char** pValue, char** pName);
 
     /**
      * @function: char* & unsigned int conversion;
@@ -175,12 +215,37 @@ protected:
     /**
      * path of data base;
      */
-    char m_dbFile[100];
+    char m_dbFile[128];
 
     /**
      * table name of data base;
      */
-    char m_dbTableName[20];
+    char m_dbTableName[64];
+    
+    /**
+     * Data base increasement instruction;
+     */
+    char m_replaceRecordCommand[256];
+    
+    /**
+     * Data base vast increasement instruction;
+     */
+    char m_insertRecordCommand[256];
+    
+    /**
+     * Data base update instruction;
+     */
+    char m_updateRecordCommand[256];
+        
+    /**
+     * Data base delete instruction;
+     */
+    char m_deleteRecordCommand[256];
+    
+    /**
+     * Construction information of Table;
+     */
+    TableInfo m_tableInfo;
 };
 
 #endif /* DBOPERATOR_H */

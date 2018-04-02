@@ -23,6 +23,12 @@
 
 using namespace std;
 
+extern const char *g_getTableStructTemplate;
+extern const char *g_replaceRecordTemplate;
+extern const char *g_insertRecordTemplate;
+extern const char *g_updateRecordTemplate;
+extern const char *g_deleteRecordTemplate;
+
 DbOperator::DbOperator()
 {
     bzero(m_dbFile, sizeof (m_dbFile));
@@ -51,11 +57,15 @@ int DbOperator::Open()
     int ret = sqlite3_open(m_dbFile, &db);
     if (ret)
     {
-        printf("Open database [%s] failed.Error msg is %s.\n", m_dbFile, sqlite3_errmsg(db));
+        printf("Open database [%s] failed.Error msg is %s.\r\n", m_dbFile, sqlite3_errmsg(db));
         sqlite3_close(db);
         db = NULL;
         return DATABASE_BLOCK;
     }
+    
+    GetDbInfo();
+    CommandGenerator();
+    
     return DATABASE_OK;
 }
 
@@ -75,13 +85,13 @@ int DbOperator::CheckTable()
     char **dbResult;
     char *zErrMsg = 0;
 
-    char strsql[100] = {0};
+    char strsql[128] = {0};
     sprintf(strsql, "SELECT \"%s\" FROM sqlite_master WHERE type='table';", m_dbTableName);
 
     int ret = sqlite3_get_table(db, strsql, &dbResult, &row, &column, &zErrMsg);
     if (ret)
     {
-        printf("Open database [%s] failed.Error msg is %s.\n", m_dbFile, sqlite3_errmsg(db));
+        printf("Open database [%s] failed.Error msg is %s.\r\n", m_dbFile, sqlite3_errmsg(db));
         return DATABASE_BLOCK;
     }
 
@@ -95,6 +105,13 @@ int DbOperator::CheckTable()
     }
 
     return DATABASE_TABLE_NOT_EXIST;
+}
+
+int DbOperator::ReLoadInfo()
+{
+    GetDbInfo();
+    CommandGenerator();
+    return DATABASE_OK;
 }
 
 int DbOperator::ExecSql(char *sqlCmd)
@@ -116,14 +133,14 @@ int DbOperator::CleanAll()
 {
     int ret;
 
-    char sqlCmd[200] = {0};
+    char sqlCmd[256] = {0};
     sprintf(sqlCmd, "DELETE FROM %s;", m_dbTableName);
     ret = ExecSql(sqlCmd);
 
     if (ret == DATABASE_EXECUTION_FAILED)
         return ret;
 
-    char sqlCmdClear[20] = {0};
+    char sqlCmdClear[32] = {0};
     sprintf(sqlCmdClear, "VACUUM;");
     ret = ExecSql(sqlCmdClear);
 
@@ -255,7 +272,7 @@ int DbOperator::CleanUpQueue()
     ret = ExecSql(strCmd);
     if (ret != DATABASE_OK)
     {
-        printf("Vacuum Command Failed\n");
+        printf("Vacuum Command Failed.\r\n");
         return DATABASE_EXECUTION_FAILED;
     }
 
@@ -275,7 +292,7 @@ int DbOperator::Count(unsigned int &count)
     int ret = sqlite3_get_table(db, strsql, &dbResult, &row, &column, &zErrMsg);
     if (ret)
     {
-        printf("Open database [%s] failed.Error msg is %s.\n", m_dbFile, sqlite3_errmsg(db));
+        printf("Open database [%s] failed.Error msg is %s.\r\n", m_dbFile, sqlite3_errmsg(db));
         return DATABASE_BLOCK;
     }
 
@@ -285,6 +302,7 @@ int DbOperator::Count(unsigned int &count)
         {
             char*szcount = dbResult[1];
             sscanf(szcount, "%d", &count);
+            return 0;
         }
     }
     return 0;
@@ -355,3 +373,195 @@ int DbOperator::IsDbFile(char *dbFilePath)
     return DATABASE_TABLE_NOT_EXIST;
 }
 
+int DbOperator::GetDbInfo()
+{
+    char strCmd[200] = {0};
+    memset(strCmd, 0x00, sizeof(strCmd));
+    sprintf(strCmd, g_getTableStructTemplate, m_dbTableName);
+
+    char *zErrMsg = 0;
+    m_tableInfo.struct_number = 0;
+    int ret = sqlite3_exec(db, strCmd, loadTableInfoCallBack, (void *)this, &zErrMsg);
+    if (ret != SQLITE_OK)
+    {
+        printf("Get database info Error, Code: %d, Result: %s\r\n", ret, zErrMsg);
+        return 1;
+    }
+
+    /*
+    printf("File Name: %s Table Name: %s Table Member Count: %d\r\n", m_dbFile, m_dbTableName, m_tableInfo.struct_number);
+    for(int i = 0; i < m_tableInfo.struct_number; i++)
+    {
+        printf("Line %d: %d, %s, %s, %d, %s, %d\r\n",
+               i, m_tableInfo.struct_info[i].s_cid, m_tableInfo.struct_info[i].s_name,
+               m_tableInfo.struct_info[i].s_type, m_tableInfo.struct_info[i].s_notNull,
+               m_tableInfo.struct_info[i].s_defaultValue, m_tableInfo.struct_info[i].s_pk);
+    }
+    */
+    return 0;
+}
+
+int DbOperator::loadTableInfoCallBack(void* param, int nCount, char** pValue, char** pName)
+{
+    DbOperator* pDbOperator = (DbOperator*) param;
+    pDbOperator->loadTableInfo(nCount, pValue, pName);
+    return 0;
+}
+
+int DbOperator::loadTableInfo(int nCount, char** pValue, char** pName)
+{
+    m_tableInfo.struct_info[m_tableInfo.struct_number].s_cid = atoi(pValue[0]);
+    memset(m_tableInfo.struct_info[m_tableInfo.struct_number].s_name, 0x00, sizeof(m_tableInfo.struct_info[m_tableInfo.struct_number].s_name));
+    strcpy(m_tableInfo.struct_info[m_tableInfo.struct_number].s_name, pValue[1]);
+    memset(m_tableInfo.struct_info[m_tableInfo.struct_number].s_type, 0x00, sizeof(m_tableInfo.struct_info[m_tableInfo.struct_number].s_type));
+    strcpy(m_tableInfo.struct_info[m_tableInfo.struct_number].s_type, pValue[2]);
+    m_tableInfo.struct_info[m_tableInfo.struct_number].s_notNull = atoi(pValue[3]);
+    memset(m_tableInfo.struct_info[m_tableInfo.struct_number].s_defaultValue, 0x00, sizeof(m_tableInfo.struct_info[m_tableInfo.struct_number].s_defaultValue));
+    if(pValue[4] != NULL)
+    {
+        strcpy(m_tableInfo.struct_info[m_tableInfo.struct_number].s_defaultValue, pValue[4]);
+    }
+    else
+    {
+        strcpy(m_tableInfo.struct_info[m_tableInfo.struct_number].s_defaultValue, "NULL");
+    }
+    m_tableInfo.struct_info[m_tableInfo.struct_number].s_pk = atoi(pValue[5]);
+    m_tableInfo.struct_number++;
+    return 0;
+ }
+
+int DbOperator::CommandGenerator()
+{
+    if(m_tableInfo.struct_number == 0)
+    {
+        return 1;
+    }
+    
+    char content1[128] = {0x00};
+    char content2[128] = {0x00};
+
+    memset(content1, 0x00, sizeof(content1));
+    memset(content2, 0x00, sizeof(content2));
+    for(int i = 0; i < m_tableInfo.struct_number; i++)
+    {
+        if(i != 0)
+        {
+            strcat(content1, ",");
+            strcat(content2, ",");
+        }
+        strcat(content1, m_tableInfo.struct_info[i].s_name);
+
+        if(strcmp(m_tableInfo.struct_info[i].s_type, "INT") == 0 || strcmp(m_tableInfo.struct_info[i].s_type, "TINYINT") == 0
+                || strcmp(m_tableInfo.struct_info[i].s_type, "BIT") == 0)
+        {
+            strcat(content2, "%d");
+        }
+        else if(strcmp(m_tableInfo.struct_info[i].s_type, "BIGINT") == 0)
+        {
+            strcat(content2, "%lld");
+        }
+        else if(strncmp(m_tableInfo.struct_info[i].s_type, "TEXT", 4) == 0)
+        {
+            strcat(content2, "\"%s\"");
+        }
+    }
+    sprintf(m_replaceRecordCommand, g_replaceRecordTemplate, m_dbTableName, content1, content2);
+
+    memset(content1, 0x00, sizeof(content1));
+    memset(content2, 0x00, sizeof(content2));
+    for(int i = 0; i < m_tableInfo.struct_number; i++)
+    {
+        if(i != 0)
+        {
+            strcat(content1, ",");
+        }
+        strcat(content1, "?");
+    }
+    sprintf(m_insertRecordCommand, g_insertRecordTemplate, m_dbTableName, content1);
+   
+    memset(content1, 0x00, sizeof(content1));
+    memset(content2, 0x00, sizeof(content2));
+    for(int i = 0; i < m_tableInfo.struct_number; i++)
+    {
+        if(i == 0)
+        {
+            strcat(content2, m_tableInfo.struct_info[i].s_name);
+            strcat(content2, "=");
+            if(strcmp(m_tableInfo.struct_info[i].s_type, "INT") == 0 || strcmp(m_tableInfo.struct_info[i].s_type, "TINYINT") == 0
+                    || strcmp(m_tableInfo.struct_info[i].s_type, "BIT") == 0)
+            {
+                strcat(content2, "%d");
+            }
+            else if(strcmp(m_tableInfo.struct_info[i].s_type, "BIGINT") == 0)
+            {
+                strcat(content2, "%lld");
+            }
+            else if(strncmp(m_tableInfo.struct_info[i].s_type, "TEXT", 4) == 0)
+            {
+                strcat(content2, "\"%s\"");
+            }
+
+            if(m_tableInfo.struct_number == 1)
+            {
+                strcat(content1, m_tableInfo.struct_info[i].s_name);
+                strcat(content1, "=");
+                if(strcmp(m_tableInfo.struct_info[i].s_type, "INT") == 0 || strcmp(m_tableInfo.struct_info[i].s_type, "TINYINT") == 0
+                        || strcmp(m_tableInfo.struct_info[i].s_type, "BIT") == 0)
+                {
+                    strcat(content1, "%d");
+                }
+                else if(strcmp(m_tableInfo.struct_info[i].s_type, "BIGINT") == 0)
+                {
+                    strcat(content1, "%lld");
+                }
+                else if(strncmp(m_tableInfo.struct_info[i].s_type, "TEXT", 4) == 0)
+                {
+                    strcat(content1, "\"%s\"");
+                }
+            }
+        }
+        else
+        {
+            if(i != 1)
+            {
+                strcat(content1, ",");
+            }
+            strcat(content1, m_tableInfo.struct_info[i].s_name);
+            strcat(content1, "=");
+            if(strcmp(m_tableInfo.struct_info[i].s_type, "INT") == 0 || strcmp(m_tableInfo.struct_info[i].s_type, "TINYINT") == 0
+                    || strcmp(m_tableInfo.struct_info[i].s_type, "BIT") == 0)
+            {
+                strcat(content1, "%d");
+            }
+            else if(strcmp(m_tableInfo.struct_info[i].s_type, "BIGINT") == 0)
+            {
+                strcat(content1, "%lld");
+            }
+            else if(strncmp(m_tableInfo.struct_info[i].s_type, "TEXT", 4) == 0)
+            {
+                strcat(content1, "\"%s\"");
+            }
+        }
+    }
+    sprintf(m_updateRecordCommand, g_updateRecordTemplate, m_dbTableName, content1, content2);
+
+    memset(content1, 0x00, sizeof(content1));
+    strcat(content1, m_tableInfo.struct_info[0].s_name);
+    strcat(content1, "=");
+    if(strcmp(m_tableInfo.struct_info[0].s_type, "INT") == 0 || strcmp(m_tableInfo.struct_info[0].s_type, "TINYINT") == 0
+            || strcmp(m_tableInfo.struct_info[0].s_type, "BIT") == 0)
+    {
+        strcat(content1, "%d");
+    }
+    else if(strcmp(m_tableInfo.struct_info[0].s_type, "BIGINT") == 0)
+    {
+        strcat(content1, "%lld");
+    }
+    else if(strncmp(m_tableInfo.struct_info[0].s_type, "TEXT", 4) == 0)
+    {
+        strcat(content1, "\"%s\"");
+    }
+    sprintf(m_deleteRecordCommand, g_deleteRecordTemplate, m_dbTableName, content1);
+
+    return 0;
+}

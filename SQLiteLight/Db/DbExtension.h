@@ -131,17 +131,17 @@ protected:
     /**
      * storage path of dat file;
      */
-    char m_datFile[100];
+    char m_datFile[128];
 
     /**
      * storage path of memory data base;
      */
-    char m_dbFile[100];
+    char m_dbFile[128];
 
     /**
      * storage path of back up data base;
      */
-    char m_dbFileBak[100];
+    char m_dbFileBak[128];
 
     /**
      * Auto back up process conditional variable[true=>start, false=>stop];

@@ -23,7 +23,7 @@ extern "C"
 
 DbExtension::DbExtension()
 {
-    m_bakupThreadId = 0;
+    m_bakupThreadId = NULL;
     m_pDbBase = NULL;
     m_pDbBakBase = NULL;
     bzero(m_bakDbFileMD5Value, sizeof (m_bakDbFileMD5Value));
@@ -65,6 +65,7 @@ int DbExtension::Init(char* dbFile, char* dbFileBak, unsigned int interval)
         ret = m_pDbBakBase->CreateTable();
         if (ret != DATABASE_OK)
             return ret;
+        m_pDbBakBase->ReLoadInfo();
     }
     m_pDbBakBase->Close();
 
@@ -88,6 +89,7 @@ int DbExtension::Init(char* dbFile, char* dbFileBak, unsigned int interval)
         ret = m_pDbBase->CreateTable();
         if (ret != DATABASE_OK)
             return ret;
+        m_pDbBase->ReLoadInfo();
     }
 
     bAutoBakSwitch = false;
@@ -105,8 +107,12 @@ int DbExtension::Init(char* dbFile, char* dbFileBak, unsigned int interval)
 int DbExtension::LoadLocalDB()
 {
     AUTO_LOCK(mtx);
+    
     if (!m_bInit)
+    {
         return DATABASE_NOT_INIT;
+    }
+    
     int ret;
     m_pDbBase->CleanUpQueue();
     m_pDbBase->Close();
@@ -115,7 +121,9 @@ int DbExtension::LoadLocalDB()
 
     ret = m_pDbBase->Open();
     if (ret != DATABASE_OK)
+    {
         return ret;
+    }
     return DATABASE_OK;
 }
 
@@ -124,32 +132,42 @@ int DbExtension::ReplaceDbFile(char* dbFilePath)
     AUTO_LOCK(mtx);
 
     if (dbFilePath == NULL)
+    {
         return DATABASE_FILE_PATH_ILLEGAL;
+    }
 
     int ret;
     ret = m_pDbBase->IsDbFile(dbFilePath);
     if (ret != 0)
+    {
         return DATABASE_ILLIGAL_DATA;
+    }
 
-    char cmd[200] = {0};
+    char cmd[256] = {0};
     sprintf(cmd, "mv %s %s", dbFilePath, m_dbFileBak);
     int status = system(cmd);
     if (status == -1 || WIFEXITED(status) == 0)
-        printf("execute [%s] failed.\n", cmd);
+    {
+        printf("execute [%s] failed.\r\n", cmd);
+    }
 
     m_bakDbFileSize = GetDbFileSize(m_dbFileBak);
 
     ret = GetDbFileMD5(m_dbFileBak, m_bakDbFileMD5Value);
     if (ret != 0)
+    {
         return DATABASE_ERROR;
+    }
 
     m_pDbBase->Close();
 
     CopyFile(m_dbFileBak, m_dbFile);
-
+    
     ret = m_pDbBase->Open();
     if (ret != DATABASE_OK)
+    {
         return ret;
+    }
 
     return DATABASE_OK;
 }
@@ -159,7 +177,7 @@ int DbExtension::UnInit()
     AUTO_LOCK(mtx);
     int ret;
     m_bInit = false;
-    while (m_bakupThreadId != 0)
+    while (m_bakupThreadId != NULL)
     {
         usleep(100000);
     }
@@ -174,7 +192,9 @@ int DbExtension::UnInit()
     GetDbFileMD5(m_dbFileBak, m_bakDbFileMD5Value);
 
     if (ret != DATABASE_OK)
+    {
         return ret;
+    }
 
     return DATABASE_OK;
 }
@@ -183,7 +203,9 @@ int DbExtension::ManulBak()
 {
     AUTO_LOCK(mtx);
     if (!m_bInit)
+    {
         return DATABASE_NOT_INIT;
+    }
 
     m_pDbBase->CleanUpQueue();
     m_pDbBase->Close();
@@ -202,13 +224,17 @@ int DbExtension::ManulBak()
 int DbExtension::CleanAll()
 {
     AUTO_LOCK(mtx);
+    
     if (!m_bInit)
+    {
         return DATABASE_NOT_INIT;
+    }
+    
     m_pDbBase->CleanAll();
-
     m_pDbBakBase->Open();
     m_pDbBakBase->CleanAll();
     m_pDbBakBase->Close();
+    
     return DATABASE_OK;
 }
 
@@ -240,7 +266,6 @@ int DbExtension::CopyFile(char *srcFilePath, char *dstFilePath)
         else if (bytes_read > 0)
         {
             ptr = buffer;
-
             while ((bytes_write = write(to_fd, ptr, bytes_read))>0)
             {
                 if ((bytes_write == -1)&&(errno != EINTR))
@@ -270,10 +295,14 @@ int DbExtension::CompareToBakDb(long long int dbFileSize, unsigned char md5Value
     AUTO_LOCK(mtx);
 
     if (m_bakDbFileSize != dbFileSize)
+    {
         return 1;
+    }
 
     if (memcmp(md5Value, m_bakDbFileMD5Value, sizeof (m_bakDbFileMD5Value)) != 0)
+    {
         return 2;
+    }
 
     return DATABASE_OK;
 }
@@ -287,8 +316,12 @@ int DbExtension::StopAutoBak(void)
 int DbExtension::StartAutoBak()
 {
     AUTO_LOCK(mtx);
+    
     if (!m_bInit)
+    {
         return DATABASE_NOT_INIT;
+    }
+    
     bAutoBakSwitch = true;
     return DATABASE_OK;
 }
@@ -340,7 +373,7 @@ void* DbExtension::AutoBakThreadFunc()
         usleep(200000);
     }
 
-    m_bakupThreadId = 0;
+    m_bakupThreadId = NULL;
 
     return NULL;
 }
@@ -348,12 +381,25 @@ void* DbExtension::AutoBakThreadFunc()
 long long int DbExtension::GetDbFileSize(char *dbFilePath)
 {
     if (access(dbFilePath, F_OK) != 0)
+    {
         return 0;
+    }
+    
+    /*
+        fstream m_file;
+        m_file.open(dbFilePath, ios::in | ios::binary);
+        m_file.seekg(0x00, ios::end);
+        int size = m_file.tellg();   
+        m_file.close();
+        return size;
+     */
 
     long int size = 0;
     struct stat statbuff;
     if (stat(dbFilePath, &statbuff) >= 0)
+    {
         size = statbuff.st_size;
+    }
     return size;
 }
 

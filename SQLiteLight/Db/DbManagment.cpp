@@ -38,59 +38,65 @@ DbManagment::~DbManagment()
         m_pDb = NULL;
         m_pDbBase = NULL;
     }
+    
     if (m_pDbBak != NULL)
     {
         delete m_pDbBak;
         m_pDbBak = NULL;
         m_pDbBakBase = NULL;
     }
-
 }
 
 DbManagment* DbManagment::GetInstance()
 {
     if (NULL == Instance)
+    {
         Instance = new DbManagment;
+    }
     return Instance;
 }
 
-int DbManagment::Add(CARD_S CardInfo)
+int DbManagment::Add(DATA_S DataInfo)
 {
     AUTO_LOCK(mtx);
-    return (m_pDb->Add(CardInfo));
+    return (m_pDb->Add(DataInfo));
 }
 
-int DbManagment::Add(CARD_S CardInfo[], unsigned int size)
+int DbManagment::Add(DATA_S DataInfo[], unsigned int size)
 {
     AUTO_LOCK(mtx);
     for (unsigned int i = 0; i < size; i++)
-        m_pDb->Add(CardInfo[i]);
+    {
+        m_pDb->Add(DataInfo[i]);
+    }
     return DATABASE_OK;
 }
 
 
-int DbManagment::Delete(unsigned int serialNumber)
+int DbManagment::Delete(unsigned int SeqenceNumber)
 {
     AUTO_LOCK(mtx);
-    return (m_pDb->Delete(serialNumber));
+    return (m_pDb->Delete(SeqenceNumber));
 }
 
-int DbManagment::Delete(unsigned int serialNumber[], unsigned int size)
+int DbManagment::Delete(unsigned int SeqenceNumber[], unsigned int size)
 {
     AUTO_LOCK(mtx);
     for (unsigned int i = 0; i < size; i++)
-        m_pDb->Delete(serialNumber[i]);
+    {
+        m_pDb->Delete(SeqenceNumber[i]);
+    }
     return DATABASE_OK;
 }
 
-int DbManagment::FindBySerialNumber(unsigned int serialNumber, CARD_S *CardInfo)
+int DbManagment::FindBySeqenceNumber(unsigned int SeqenceNumber, DATA_S *DataInfo)
 {
     AUTO_LOCK(mtx);
-    return (m_pDb->FindBySerialNumber(serialNumber, CardInfo));
+    return (m_pDb->FindBySeqenceNumber(SeqenceNumber, DataInfo));
 }
 
-int DbManagment::CountBySerialNumber(unsigned int &amount)
+int DbManagment::CountBySeqenceNumber(unsigned int &amount)
 {
     AUTO_LOCK(mtx);
-    return (m_pDb->CountBySerialNumber(amount));
+    return (m_pDb->CountBySeqenceNumber(amount));
 }

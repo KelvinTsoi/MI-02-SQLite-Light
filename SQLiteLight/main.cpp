@@ -21,6 +21,7 @@ Tester demo;
 
 int main(int argc, char **argv)
 {
+	//White Box Testing Demo
     demo.Process();
 
     return 0;
